@@ -1,0 +1,206 @@
+services:
+  # In-Memory Cache with Persistence
+  redis:
+    image: redis:7-alpine
+    container_name: pad_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # 1. Auth & Identity Microservice
+  auth-service:
+    build: .
+    container_name: pad_auth
+    command: uvicorn services.auth.main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    environment:
+      - DATA_FILE=/data/auth.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 2. Product Catalog Microservice
+  catalog-service:
+    build: .
+    container_name: pad_catalog
+    command: uvicorn services.catalog.main:app --host 0.0.0.0 --port 8002
+    ports:
+      - "8002:8002"
+    environment:
+      - DATA_FILE=/data/catalog.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 3. Search & Filtering Microservice
+  search-service:
+    build: .
+    container_name: pad_search
+    command: uvicorn services.search.main:app --host 0.0.0.0 --port 8003
+    ports:
+      - "8003:8003"
+    environment:
+      - CATALOG_URL=http://catalog-service:8002
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - catalog-service
+      - redis
+    restart: unless-stopped
+
+  # 4. Shopping Cart Microservice
+  cart-service:
+    build: .
+    container_name: pad_cart
+    command: uvicorn services.cart.main:app --host 0.0.0.0 --port 8004
+    ports:
+      - "8004:8004"
+    environment:
+      - DATA_FILE=/data/cart.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 5. Order Management Microservice
+  order-service:
+    build: .
+    container_name: pad_order
+    command: uvicorn services.order.main:app --host 0.0.0.0 --port 8005
+    ports:
+      - "8005:8005"
+    environment:
+      - DATA_FILE=/data/orders.json
+      - CATALOG_URL=http://catalog-service:8002
+      - NOTIFICATION_URL=http://notification-service:8009
+      - AUDIT_URL=http://audit-service:8012
+    volumes:
+      - ./data:/data
+    depends_on:
+      - catalog-service
+      - notification-service
+      - audit-service
+    restart: unless-stopped
+
+  # 6. Payment Gateway Microservice
+  payment-service:
+    build: .
+    container_name: pad_payment
+    command: uvicorn services.payment.main:app --host 0.0.0.0 --port 8006
+    ports:
+      - "8006:8006"
+    environment:
+      - DATA_FILE=/data/payments.json
+      - ORDER_URL=http://order-service:8005
+      - NOTIFICATION_URL=http://notification-service:8009
+      - AUDIT_URL=http://audit-service:8012
+    volumes:
+      - ./data:/data
+    depends_on:
+      - order-service
+      - notification-service
+      - audit-service
+    restart: unless-stopped
+
+  # 7. Reviews & Ratings Microservice
+  review-service:
+    build: .
+    container_name: pad_review
+    command: uvicorn services.review.main:app --host 0.0.0.0 --port 8007
+    ports:
+      - "8007:8007"
+    environment:
+      - DATA_FILE=/data/reviews.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 8. Smart Recommendation Microservice
+  recommendation-service:
+    build: .
+    container_name: pad_recommendation
+    command: uvicorn services.recommendation.main:app --host 0.0.0.0 --port 8008
+    ports:
+      - "8008:8008"
+    environment:
+      - CATALOG_URL=http://catalog-service:8002
+    depends_on:
+      - catalog-service
+    restart: unless-stopped
+
+  # 9. Notification & Events Microservice
+  notification-service:
+    build: .
+    container_name: pad_notification
+    command: uvicorn services.notification.main:app --host 0.0.0.0 --port 8009
+    ports:
+      - "8009:8009"
+    environment:
+      - DATA_FILE=/data/notifications.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 10. Analytics & BI Microservice
+  analytics-service:
+    build: .
+    container_name: pad_analytics
+    command: uvicorn services.analytics.main:app --host 0.0.0.0 --port 8010
+    ports:
+      - "8010:8010"
+    environment:
+      - ORDER_URL=http://order-service:8005
+      - CATALOG_URL=http://catalog-service:8002
+    depends_on:
+      - order-service
+      - catalog-service
+    restart: unless-stopped
+
+  # 11. Customer Support & Tickets Microservice
+  support-service:
+    build: .
+    container_name: pad_support
+    command: uvicorn services.support.main:app --host 0.0.0.0 --port 8011
+    ports:
+      - "8011:8011"
+    environment:
+      - DATA_FILE=/data/support.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # 12. Audit & Security Trail Microservice
+  audit-service:
+    build: .
+    container_name: pad_audit
+    command: uvicorn services.audit.main:app --host 0.0.0.0 --port 8012
+    ports:
+      - "8012:8012"
+    environment:
+      - DATA_FILE=/data/audit.json
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # API Gateway & Reverse Proxy (Nginx)
+  gateway:
+    image: nginx:alpine
+    container_name: pad_gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - auth-service
+      - catalog-service
+      - search-service
+      - cart-service
+      - order-service
+      - payment-service
+      - review-service
+      - recommendation-service
+      - notification-service
+      - analytics-service
+      - support-service
+      - audit-service
+    restart: unless-stopped

@@ -1,0 +1,30 @@
+{
+  "user_demo": {
+    "user_id": "user_demo",
+    "items": [],
+    "updated_at": 1793338863.0636053
+  },
+  "guest_session": {
+    "user_id": "guest_session",
+    "items": [
+      {
+        "product_id": "prod_6",
+        "title": "Raspberry Pi 5 (8GB Edition)",
+        "price": 85.0,
+        "quantity": 1,
+        "image_url": "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=600&auto=format&fit=crop&q=80"
+      }
+    ],
+    "updated_at": 1793340806.7866254
+  },
+  "user_admin": {
+    "user_id": "user_admin",
+    "items": [],
+    "updated_at": 1793339263.226579
+  },
+  "user_1793340832487": {
+    "user_id": "user_1793340832487",
+    "items": [],
+    "updated_at": 1793342346.1864064
+  }
+}

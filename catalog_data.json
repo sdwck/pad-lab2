@@ -1,0 +1,181 @@
+{
+  "prod_1": {
+    "id": "prod_1",
+    "title": "MacBook Pro 16\" M3 Max",
+    "category": "Laptops",
+    "price": 3499.0,
+    "stock": 14,
+    "rating": 4.9,
+    "reviews_count": 38,
+    "description": "Apple M3 Max 16-core CPU, 40-core GPU, 48GB Unified RAM, 1TB NVMe.",
+    "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "apple",
+      "m3",
+      "laptop",
+      "silicon"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_2": {
+    "id": "prod_2",
+    "title": "NVIDIA GeForce RTX 4090 OC",
+    "category": "Components",
+    "price": 1999.0,
+    "stock": 6,
+    "rating": 5.0,
+    "reviews_count": 42,
+    "description": "24GB GDDR6X, Ada Lovelace, 4th gen Tensor Cores for local LLM inference.",
+    "image_url": "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "gpu",
+      "nvidia",
+      "hardware",
+      "ai"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_3": {
+    "id": "prod_3",
+    "title": "Keychron Q1 Pro Wireless",
+    "category": "Peripherals",
+    "price": 199.99,
+    "stock": 25,
+    "rating": 4.8,
+    "reviews_count": 56,
+    "description": "CNC aluminum chassis, double-gasket acoustic mount, hot-swappable switches.",
+    "image_url": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "keyboard",
+      "mechanical",
+      "custom"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_4": {
+    "id": "prod_4",
+    "title": "Dell UltraSharp 32\" 4K Hub (U3223QE)",
+    "category": "Monitors",
+    "price": 849.5,
+    "stock": 11,
+    "rating": 4.7,
+    "reviews_count": 19,
+    "description": "IPS Black panel, 2000:1 contrast, 90W USB-C Power Delivery, RJ45 Ethernet.",
+    "image_url": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "monitor",
+      "4k",
+      "ips",
+      "usb-c"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_5": {
+    "id": "prod_5",
+    "title": "Sony WH-1000XM5 ANC",
+    "category": "Audio",
+    "price": 398.0,
+    "stock": 18,
+    "rating": 4.9,
+    "reviews_count": 76,
+    "description": "Dual processor ANC engine, 8 microphones, 30h battery life, LDAC Hi-Res.",
+    "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "audio",
+      "anc",
+      "wireless",
+      "headphones"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_6": {
+    "id": "prod_6",
+    "title": "Raspberry Pi 5 (8GB Edition)",
+    "category": "IoT & Servers",
+    "price": 85.0,
+    "stock": 42,
+    "rating": 4.8,
+    "reviews_count": 64,
+    "description": "Broadcom BCM2712 Quad Arm Cortex-A76 @ 2.4GHz, dual 4Kp60, PCIe 2.0 slot.",
+    "image_url": "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "arm",
+      "iot",
+      "linux",
+      "edge"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_7": {
+    "id": "prod_7",
+    "title": "Apple Mac Studio M2 Ultra",
+    "category": "Workstations",
+    "price": 3999.0,
+    "stock": 5,
+    "rating": 5.0,
+    "reviews_count": 28,
+    "description": "24-core CPU, 60-core GPU, 64GB Unified RAM, 800GB/s bandwidth, 1TB SSD.",
+    "image_url": "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "apple",
+      "mac",
+      "workstation",
+      "silicon"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_8": {
+    "id": "prod_8",
+    "title": "Samsung 990 PRO NVMe 4TB",
+    "category": "Components",
+    "price": 319.99,
+    "stock": 30,
+    "rating": 4.9,
+    "reviews_count": 83,
+    "description": "PCIe 4.0 NVMe M.2 2280, up to 7450 MB/s sequential read, nickel heat spreader.",
+    "image_url": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "ssd",
+      "nvme",
+      "pcie",
+      "storage"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_9": {
+    "id": "prod_9",
+    "title": "Ubiquiti UniFi Dream Machine Pro",
+    "category": "Networking",
+    "price": 499.0,
+    "stock": 14,
+    "rating": 4.8,
+    "reviews_count": 35,
+    "description": "Enterprise 10G SFP+ Gateway, 3.5 Gbps IDS/IPS throughput, 8-port GbE switch.",
+    "image_url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "networking",
+      "unifi",
+      "enterprise",
+      "router"
+    ],
+    "created_at": 1793337521.7377515
+  },
+  "prod_10": {
+    "id": "prod_10",
+    "title": "Logitech MX Master 3S",
+    "category": "Peripherals",
+    "price": 99.99,
+    "stock": 50,
+    "rating": 4.9,
+    "reviews_count": 112,
+    "description": "8K DPI any-surface track sensor, Quiet Clicks, MagSpeed electromagnetic scroll.",
+    "image_url": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&auto=format&fit=crop&q=80",
+    "tags": [
+      "mouse",
+      "wireless",
+      "logitech",
+      "ergonomic"
+    ],
+    "created_at": 1793337521.7377515
+  }
+}

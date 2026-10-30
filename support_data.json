@@ -1,0 +1,47 @@
+{
+  "tkt_101": {
+    "id": "tkt_101",
+    "user_id": "user_demo",
+    "user_name": "Tima Diaconu",
+    "subject": "Delivery inquiry for Chișinău area",
+    "priority": "normal",
+    "status": "OPEN",
+    "messages": [
+      {
+        "id": "msg_1",
+        "sender_name": "Tima Diaconu",
+        "is_staff": false,
+        "text": "Hello, how fast is delivery for Raspberry Pi 5 within Rîșcani district?",
+        "timestamp": 1793300888.8929255
+      },
+      {
+        "id": "msg_2",
+        "sender_name": "Support Agent Victor",
+        "is_staff": true,
+        "text": "Hi Tima! Orders confirmed before 14:00 arrive same-day via local courier.",
+        "timestamp": 1793306888.8929255
+      }
+    ],
+    "created_at": 1793300888.8929255,
+    "updated_at": 1793306888.8929255
+  },
+  "tkt_1793342373889": {
+    "id": "tkt_1793342373889",
+    "user_id": "user_1793340832487",
+    "user_name": "test",
+    "subject": "test",
+    "priority": "low",
+    "status": "OPEN",
+    "messages": [
+      {
+        "id": "msg_1793342373889",
+        "sender_name": "test",
+        "is_staff": false,
+        "text": "test",
+        "timestamp": 1793342373.8895638
+      }
+    ],
+    "created_at": 1793342373.8895638,
+    "updated_at": 1793342373.8895638
+  }
+}

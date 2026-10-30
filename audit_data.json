@@ -1,0 +1,56 @@
+{
+  "aud_1": {
+    "id": "aud_1",
+    "service": "auth-service",
+    "action": "USER_REGISTER",
+    "user_id": "user_demo",
+    "details": "Registered new student account (student@utm.md)",
+    "ip_address": "127.0.0.1",
+    "timestamp": 1793246797.1560924
+  },
+  "aud_2": {
+    "id": "aud_2",
+    "service": "order-service",
+    "action": "ORDER_CREATED",
+    "user_id": "user_demo",
+    "details": "Order ord_1001 placed for Keychron Q1 Pro",
+    "ip_address": "127.0.0.1",
+    "timestamp": 1793250397.1560924
+  },
+  "aud_1793336797156": {
+    "id": "aud_1793336797156",
+    "service": "order-service",
+    "action": "ORDER_CREATED",
+    "user_id": "user_demo",
+    "details": "Order ord_1793336797131 created for 1999.0 USD",
+    "ip_address": "internal-docker",
+    "timestamp": 1793336797.1560924
+  },
+  "aud_1793336797217": {
+    "id": "aud_1793336797217",
+    "service": "payment-service",
+    "action": "PAYMENT_PROCESSED",
+    "user_id": "user_demo",
+    "details": "Tx tx_1793336797175: $1999.0 charged successfully on order ord_1793336797131",
+    "ip_address": "internal-docker",
+    "timestamp": 1793336797.217737
+  },
+  "aud_1793342345998": {
+    "id": "aud_1793342345998",
+    "service": "order-service",
+    "action": "ORDER_CREATED",
+    "user_id": "user_1793340832487",
+    "details": "Order ord_1793342345968 created for 598.99 USD",
+    "ip_address": "internal-docker",
+    "timestamp": 1793342345.9980493
+  },
+  "aud_1793342346115": {
+    "id": "aud_1793342346115",
+    "service": "payment-service",
+    "action": "PAYMENT_PROCESSED",
+    "user_id": "user_1793340832487",
+    "details": "Tx tx_1793342346071: $598.99 charged successfully on order ord_1793342345968",
+    "ip_address": "internal-docker",
+    "timestamp": 1793342346.1156478
+  }
+}
