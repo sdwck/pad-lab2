@@ -20,5 +20,16 @@
     "status": "SUCCESS",
     "error_reason": null,
     "created_at": 1793342346.0714731
+  },
+  "tx_1793343995881": {
+    "id": "tx_1793343995881",
+    "order_id": "ord_1793343995794",
+    "user_id": "user_1793340832487",
+    "amount": 1999.0,
+    "card_masked": "**** **** **** 1234",
+    "card_holder": "TEST",
+    "status": "SUCCESS",
+    "error_reason": null,
+    "created_at": 1793343995.8818276
   }
 }

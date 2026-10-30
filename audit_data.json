@@ -52,5 +52,23 @@
     "details": "Tx tx_1793342346071: $598.99 charged successfully on order ord_1793342345968",
     "ip_address": "internal-docker",
     "timestamp": 1793342346.1156478
+  },
+  "aud_1793343995806": {
+    "id": "aud_1793343995806",
+    "service": "order-service",
+    "action": "ORDER_CREATED",
+    "user_id": "user_1793340832487",
+    "details": "Order ord_1793343995794 created for 1999.0 USD",
+    "ip_address": "internal-docker",
+    "timestamp": 1793343995.8063734
+  },
+  "aud_1793343995910": {
+    "id": "aud_1793343995910",
+    "service": "payment-service",
+    "action": "PAYMENT_PROCESSED",
+    "user_id": "user_1793340832487",
+    "details": "Tx tx_1793343995881: $1999.0 charged successfully on order ord_1793343995794",
+    "ip_address": "internal-docker",
+    "timestamp": 1793343995.9109008
   }
 }

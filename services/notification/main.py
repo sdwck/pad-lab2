@@ -123,6 +123,13 @@ def health():
 def send_notification(dto: NotificationCreate, service: NotificationService = Depends(get_service)):
     return service.send_notification(dto)
 
+@app.get("/recent", response_model=List[Notification])
+@app.get("/notifications/recent", response_model=List[Notification])
+def get_recent_notifications(limit: int = 30, service: NotificationService = Depends(get_service)):
+    all_notifs = list(service.repo._load().values())
+    all_notifs.sort(key=lambda x: x.get("created_at", 0), reverse=True)
+    return [Notification(**n) for n in all_notifs[:limit]]
+
 @app.get("/notifications/user/{user_id}", response_model=List[Notification])
 def get_user_notifications(user_id: str, service: NotificationService = Depends(get_service)):
     return service.get_user_notifications(user_id)

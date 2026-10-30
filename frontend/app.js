@@ -18,6 +18,8 @@ class StoreModel {
         this.tickets = [];
         this.auditLogs = [];
         this.recommendations = [];
+        this.recommendationContext = "Top Rated & Trending Hardware";
+        this.notifications = [];
         this.selectedProductId = null;
         this.servicesMesh = [
             {
@@ -161,12 +163,13 @@ class StoreViewModel {
         await Promise.allSettled([
             this.fetchCategories(),
             this.searchProducts(""),
-            this.fetchRecommendations(),
             this.fetchCart(),
             this.fetchOrders(),
             this.fetchAnalytics(),
             this.fetchTickets(),
-            this.fetchAuditLogs()
+            this.fetchAuditLogs(),
+            this.fetchNotifications(),
+            this.fetchRecommendations()
         ]);
     }
 
@@ -304,6 +307,7 @@ class StoreViewModel {
             });
             if (res.ok) {
                 this.model.cart = await res.json();
+                await this.fetchRecommendations();
                 return true;
             }
         } catch (e) {}
@@ -320,6 +324,7 @@ class StoreViewModel {
             });
             if (res.ok) {
                 this.model.cart = await res.json();
+                await this.fetchRecommendations();
                 return true;
             }
         } catch (e) {}
@@ -332,6 +337,7 @@ class StoreViewModel {
             const res = await fetch(`${this.apiBase}/cart/cart/${uid}/items/${productId}`, { method: "DELETE" });
             if (res.ok) {
                 this.model.cart = await res.json();
+                await this.fetchRecommendations();
                 return true;
             }
         } catch (e) {}
@@ -344,6 +350,7 @@ class StoreViewModel {
             const res = await fetch(`${this.apiBase}/cart/cart/${uid}`, { method: "DELETE" });
             if (res.ok) {
                 this.model.cart = await res.json();
+                await this.fetchRecommendations();
                 return true;
             }
         } catch (e) {}
@@ -406,6 +413,8 @@ class StoreViewModel {
         await this.fetchOrders();
         await this.fetchAnalytics();
         await this.fetchAuditLogs();
+        await this.fetchNotifications();
+        await this.fetchRecommendations();
 
         return order;
     }
@@ -430,9 +439,34 @@ class StoreViewModel {
 
     async fetchRecommendations() {
         try {
-            const res = await fetch(`${this.apiBase}/recommendations/recommendations/trending`);
-            if (res.ok) this.model.recommendations = await res.json();
-        } catch (e) {}
+            let url = `${this.apiBase}/recommendations/recommendations/trending?limit=4`;
+            let context = "Top Rated & Trending Hardware";
+
+            if (this.model.cart && this.model.cart.items && this.model.cart.items.length > 0) {
+                const latest = this.model.cart.items[this.model.cart.items.length - 1];
+                url = `${this.apiBase}/recommendations/recommendations/product/${latest.product_id}?limit=4`;
+                context = `Frequently Paired with ${latest.title}`;
+            }
+
+            const res = await fetch(url);
+            if (res.ok) {
+                this.model.recommendations = await res.json();
+                this.model.recommendationContext = context;
+            }
+        } catch (e) {
+            console.warn("Recommendations fetch failed:", e);
+        }
+    }
+
+    async fetchNotifications() {
+        try {
+            const res = await fetch(`${this.apiBase}/notifications/notifications/recent?limit=30`);
+            if (res.ok) {
+                this.model.notifications = await res.json();
+            }
+        } catch (e) {
+            console.warn("Notifications fetch failed:", e);
+        }
     }
 
     async fetchTickets() {
@@ -701,6 +735,39 @@ class StoreView {
             this.renderAuditLogs();
             this.showToast("Audit polled");
         });
+
+        // Notifications Modal Listeners
+        const notifBellBtn = document.getElementById("notifBellBtn");
+        if (notifBellBtn) {
+            notifBellBtn.addEventListener("click", async () => {
+                await this.vm.fetchNotifications();
+                this.renderNotifications();
+                document.getElementById("notificationsModal").classList.add("active");
+            });
+        }
+
+        const closeNotifModal = document.getElementById("closeNotifModal");
+        if (closeNotifModal) {
+            closeNotifModal.addEventListener("click", () => {
+                document.getElementById("notificationsModal").classList.remove("active");
+            });
+        }
+
+        const closeNotifModalBtn2 = document.getElementById("closeNotifModalBtn2");
+        if (closeNotifModalBtn2) {
+            closeNotifModalBtn2.addEventListener("click", () => {
+                document.getElementById("notificationsModal").classList.remove("active");
+            });
+        }
+
+        const refreshNotifBtn = document.getElementById("refreshNotifBtn");
+        if (refreshNotifBtn) {
+            refreshNotifBtn.addEventListener("click", async () => {
+                await this.vm.fetchNotifications();
+                this.renderNotifications();
+                this.showToast("Emails & receipts refreshed");
+            });
+        }
 
         const checkMeshBtn = document.getElementById("checkMeshBtn");
         if (checkMeshBtn) {
@@ -1074,7 +1141,19 @@ class StoreView {
 
     renderRecommendations() {
         const grid = document.getElementById("recommendationsGrid");
+        if (!grid) return;
         grid.innerHTML = "";
+
+        const subtitle = document.getElementById("recContextSubtitle");
+        if (subtitle && this.vm.model.recommendationContext) {
+            subtitle.textContent = this.vm.model.recommendationContext;
+        }
+
+        if (!this.vm.model.recommendations || this.vm.model.recommendations.length === 0) {
+            grid.innerHTML = `<div style="color: #52525b; font-size: 0.8rem; padding: 10px;">No recommendations available.</div>`;
+            return;
+        }
+
         this.vm.model.recommendations.forEach(r => {
             const el = document.createElement("div");
             el.className = "rec-unit";
@@ -1083,10 +1162,77 @@ class StoreView {
                 <div class="rec-info">
                     <div class="rec-title">${r.title}</div>
                     <div class="rec-reason">${r.reason}</div>
-                    <div class="rec-price mono">$${r.price.toFixed(2)}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                        <span class="rec-price mono">$${r.price.toFixed(2)}</span>
+                        <button class="btn btn-secondary btn-sm rec-add-btn" data-id="${r.id}" style="padding: 2px 8px; font-size: 0.72rem;">+ Add</button>
+                    </div>
                 </div>
             `;
             grid.appendChild(el);
+        });
+
+        grid.querySelectorAll(".rec-add-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const prod = this.vm.model.products.find(p => p.id === btn.dataset.id) || {
+                    id: btn.dataset.id,
+                    title: btn.closest(".rec-unit").querySelector(".rec-title").textContent,
+                    price: parseFloat(btn.closest(".rec-unit").querySelector(".rec-price").textContent.replace("$", "")),
+                    image_url: btn.closest(".rec-unit").querySelector(".rec-img").src
+                };
+                await this.vm.addToCart(prod);
+                this.renderCart();
+                this.renderRecommendations();
+                this.showToast(`Added to cart: ${prod.title}`);
+            });
+        });
+    }
+
+    renderNotifications() {
+        const notifs = this.vm.model.notifications || [];
+        const badge = document.getElementById("notifBadge");
+        if (badge) {
+            badge.textContent = notifs.length;
+            badge.style.display = notifs.length > 0 ? "inline-block" : "none";
+        }
+
+        const listEl = document.getElementById("notificationsList");
+        if (!listEl) return;
+        listEl.innerHTML = "";
+
+        if (notifs.length === 0) {
+            listEl.innerHTML = `<div style="text-align: center; color: #52525b; padding: 30px;">No notifications yet. Place an order to see transactional receipts.</div>`;
+            return;
+        }
+
+        notifs.forEach(n => {
+            const item = document.createElement("div");
+            item.className = "notif-item";
+            const dateStr = new Date(n.created_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            
+            let icon = "✉️";
+            let typeColor = "#38bdf8";
+            if (n.type === "payment") { icon = "💳"; typeColor = "#10b981"; }
+            else if (n.type === "order") { icon = "📦"; typeColor = "#f59e0b"; }
+
+            item.innerHTML = `
+                <div style="display: flex; gap: 10px; align-items: flex-start;">
+                    <span style="font-size: 1.1rem;">${icon}</span>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 0.82rem; font-weight: 600; color: #fff;">${n.title}</span>
+                            <span class="mono" style="font-size: 0.68rem; color: #71717a;">${dateStr}</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #a1a1aa; line-height: 1.4; word-break: break-word;">${n.message}</div>
+                        <div style="display: flex; gap: 8px; margin-top: 4px; align-items: center;">
+                            <span class="mono" style="font-size: 0.65rem; color: ${typeColor}; background: rgba(255,255,255,0.04); padding: 1px 6px; border-radius: 3px; border: 1px solid #1e1e24;">
+                                ${n.type.toUpperCase()}
+                            </span>
+                            <span class="mono text-muted" style="font-size: 0.65rem;">ID: ${n.id}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(item);
         });
     }
 
@@ -1577,5 +1723,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     view.renderAnalytics();
     view.renderSupport();
     view.renderAuditLogs();
+    view.renderNotifications();
     view.renderMesh();
 });

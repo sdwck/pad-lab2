@@ -61,5 +61,24 @@
     "status": "PAID",
     "created_at": 1793342345.9688005,
     "updated_at": 1793342346.0965834
+  },
+  "ord_1793343995794": {
+    "id": "ord_1793343995794",
+    "user_id": "user_1793340832487",
+    "customer_name": "test",
+    "customer_email": "test@test.test",
+    "shipping_address": "qwe",
+    "items": [
+      {
+        "product_id": "prod_2",
+        "title": "NVIDIA GeForce RTX 4090 OC",
+        "price": 1999.0,
+        "quantity": 1
+      }
+    ],
+    "total_amount": 1999.0,
+    "status": "PAID",
+    "created_at": 1793343995.7948656,
+    "updated_at": 1793343995.893365
   }
 }

@@ -43,12 +43,38 @@ class CatalogClient:
             pass
         return None
 
+AFFINITY_BUNDLES = {
+    "Laptops": {
+        "Peripherals": (0.85, "Essential Laptop Peripheral (Keyboard / Mouse)"),
+        "Monitors": (0.75, "External Workspace 4K Display"),
+        "Audio": (0.65, "ANC Noise-Cancelling Audio Companion"),
+    },
+    "Workstations": {
+        "Monitors": (0.85, "Pro Ultra-Res Studio Display"),
+        "Peripherals": (0.80, "Mechanical Input Hardware"),
+        "Components": (0.70, "High-Speed NVMe Storage Expansion"),
+    },
+    "Components": {
+        "Components": (0.80, "Complementary System Component"),
+        "Peripherals": (0.60, "Gaming / Creator Peripheral"),
+    },
+    "Monitors": {
+        "Peripherals": (0.70, "Desktop Input Bundle"),
+        "Laptops": (0.65, "Host Laptop Machine"),
+    },
+    "Peripherals": {
+        "Laptops": (0.80, "Compatible Laptop Pairing"),
+        "Workstations": (0.75, "Compatible Workstation Pairing"),
+        "Peripherals": (0.65, "Input Desk Complement"),
+    }
+}
+
 # --- Service Layer Pattern ---
 class RecommendationService:
     def __init__(self, client: CatalogClient):
         self.client = client
 
-    async def get_recommendations_for_product(self, product_id: str, limit: int = 3) -> List[RecommendedProduct]:
+    async def get_recommendations_for_product(self, product_id: str, limit: int = 4) -> List[RecommendedProduct]:
         target = await self.client.get_product(product_id)
         all_prods = await self.client.get_all_products()
 
@@ -65,20 +91,25 @@ class RecommendationService:
 
             score = 0.0
             reasons = []
+            p_cat = p.get("category", "")
 
-            # Category match gives 0.5
-            if p.get("category") == target_cat:
-                score += 0.5
+            # 1. Complementary cross-category affinity (e.g. Laptop -> Keyboard/Mouse/Monitor)
+            if target_cat in AFFINITY_BUNDLES and p_cat in AFFINITY_BUNDLES[target_cat]:
+                weight, desc = AFFINITY_BUNDLES[target_cat][p_cat]
+                score += weight
+                reasons.append(desc)
+            elif p_cat == target_cat:
+                score += 0.35
                 reasons.append(f"Same category ({target_cat})")
 
-            # Tag overlap gives 0.2 per matching tag
+            # 2. Tag overlap gives 0.25 per matching tag
             tags = set(p.get("tags", []))
             common = target_tags.intersection(tags)
             if common:
-                score += min(0.4, len(common) * 0.2)
+                score += min(0.5, len(common) * 0.25)
                 reasons.append(f"Shared tags: {', '.join(common)}")
 
-            # Rating boost
+            # 3. Rating boost
             rating = p.get("rating", 4.5)
             score += (rating / 5.0) * 0.1
 

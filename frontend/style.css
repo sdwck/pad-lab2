@@ -207,6 +207,48 @@ body {
 
 .sep { color: var(--border); }
 
+.notif-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.notif-btn:hover {
+    color: #fff;
+    border-color: var(--border-hover);
+}
+
+.notif-badge-pill {
+    background: #2563eb;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0 5px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.notif-item {
+    background: #09090d;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    transition: border-color 0.15s ease;
+}
+
+.notif-item:hover {
+    border-color: var(--border-hover);
+}
+
 /* User / Guest State */
 .auth-slot {
     display: flex;

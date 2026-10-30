@@ -24,7 +24,15 @@
   },
   "user_1793340832487": {
     "user_id": "user_1793340832487",
-    "items": [],
-    "updated_at": 1793342346.1864064
+    "items": [
+      {
+        "product_id": "prod_1",
+        "title": "MacBook Pro 16\" M3 Max",
+        "price": 3499.0,
+        "quantity": 1,
+        "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80"
+      }
+    ],
+    "updated_at": 1793344506.00287
   }
 }
