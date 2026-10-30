@@ -1,4 +1,8 @@
-# CloudMart Distributed: 12-Microservices E-Commerce Platform
+# CloudMart Distributed v2.0.0: 12-Microservices E-Commerce Platform
+
+[![Release](https://img.shields.io/badge/release-v2.0.0-blue.svg)](https://github.com/sdwck/pad-lab2/releases)
+[![Microservices](https://img.shields.io/badge/microservices-12%20decoupled%20nodes-emerald.svg)](#architecture-overview)
+[![Course](https://img.shields.io/badge/course-PAD%20Lab%202-violet.svg)](#)
 
 Laboratory Work №2 on **PAD (Distributed Applications Programming / Programarea Aplicațiilor Distribuite)**.  
 Technical University of Moldova (FCIM UTM), Group TI-235.
