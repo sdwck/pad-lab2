@@ -163,14 +163,14 @@ class StoreViewModel {
         await Promise.allSettled([
             this.fetchCategories(),
             this.searchProducts(""),
-            this.fetchCart(),
             this.fetchOrders(),
             this.fetchAnalytics(),
             this.fetchTickets(),
             this.fetchAuditLogs(),
             this.fetchNotifications(),
-            this.fetchRecommendations()
+            this.fetchCart()
         ]);
+        await this.fetchRecommendations();
     }
 
     async restoreSession() {
@@ -437,15 +437,27 @@ class StoreViewModel {
         } catch (e) {}
     }
 
-    async fetchRecommendations() {
+    async fetchRecommendations(explicitProductId = null) {
         try {
             let url = `${this.apiBase}/recommendations/recommendations/trending?limit=4`;
             let context = "Top Rated & Trending Hardware";
 
-            if (this.model.cart && this.model.cart.items && this.model.cart.items.length > 0) {
+            let targetProdId = explicitProductId;
+            let targetTitle = "";
+
+            if (!targetProdId && this.model.cart && this.model.cart.items && this.model.cart.items.length > 0) {
                 const latest = this.model.cart.items[this.model.cart.items.length - 1];
-                url = `${this.apiBase}/recommendations/recommendations/product/${latest.product_id}?limit=4`;
-                context = `Frequently Paired with ${latest.title}`;
+                targetProdId = latest.product_id;
+                targetTitle = latest.title;
+            }
+
+            if (targetProdId) {
+                url = `${this.apiBase}/recommendations/recommendations/product/${targetProdId}?limit=4`;
+                if (!targetTitle) {
+                    const found = this.model.products.find(p => p.id === targetProdId);
+                    targetTitle = found ? found.title : "Selected Product";
+                }
+                context = `Frequently Paired with ${targetTitle}`;
             }
 
             const res = await fetch(url);
@@ -1088,12 +1100,27 @@ class StoreView {
         });
 
         grid.querySelectorAll(".add-cart-btn").forEach(btn => {
-            btn.addEventListener("click", async () => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
                 const prod = this.vm.model.products.find(p => p.id === btn.dataset.id);
                 if (prod) {
                     await this.vm.addToCart(prod);
-                    this.renderCartCount();
+                    this.renderCart();
+                    this.renderRecommendations();
                     this.showToast(`Added to cart: ${prod.title}`);
+                }
+            });
+        });
+
+        grid.querySelectorAll(".hardware-card").forEach(card => {
+            card.style.cursor = "pointer";
+            card.addEventListener("click", async (e) => {
+                if (e.target.closest(".add-cart-btn") || e.target.closest(".rev-click")) return;
+                const addBtn = card.querySelector(".add-cart-btn");
+                if (addBtn) {
+                    const prodId = addBtn.dataset.id;
+                    await this.vm.fetchRecommendations(prodId);
+                    this.renderRecommendations();
                 }
             });
         });
@@ -1141,37 +1168,51 @@ class StoreView {
 
     renderRecommendations() {
         const grid = document.getElementById("recommendationsGrid");
-        if (!grid) return;
-        grid.innerHTML = "";
+        const cartGrid = document.getElementById("cartRecommendationsGrid");
+        const grids = [grid, cartGrid].filter(Boolean);
+        if (grids.length === 0) return;
 
+        const heading = document.getElementById("recHeading");
         const subtitle = document.getElementById("recContextSubtitle");
-        if (subtitle && this.vm.model.recommendationContext) {
-            subtitle.textContent = this.vm.model.recommendationContext;
+        if (this.vm.model.recommendationContext) {
+            if (heading) {
+                heading.textContent = this.vm.model.recommendationContext.startsWith("Frequently Paired")
+                    ? this.vm.model.recommendationContext
+                    : "Recommended Hardware";
+            }
+            if (subtitle) {
+                subtitle.textContent = this.vm.model.recommendationContext.startsWith("Frequently Paired")
+                    ? "Affinity Engine Pairing • recommendation-service :8008"
+                    : "Top Rated & Trending Hardware • recommendation-service :8008";
+            }
         }
 
-        if (!this.vm.model.recommendations || this.vm.model.recommendations.length === 0) {
-            grid.innerHTML = `<div style="color: #52525b; font-size: 0.8rem; padding: 10px;">No recommendations available.</div>`;
-            return;
-        }
+        grids.forEach(g => {
+            g.innerHTML = "";
+            if (!this.vm.model.recommendations || this.vm.model.recommendations.length === 0) {
+                g.innerHTML = `<div style="color: #52525b; font-size: 0.8rem; padding: 10px;">No recommendations available.</div>`;
+                return;
+            }
 
-        this.vm.model.recommendations.forEach(r => {
-            const el = document.createElement("div");
-            el.className = "rec-unit";
-            el.innerHTML = `
-                <img src="${r.image_url}" class="rec-img" onerror="this.src='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300';">
-                <div class="rec-info">
-                    <div class="rec-title">${r.title}</div>
-                    <div class="rec-reason">${r.reason}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-                        <span class="rec-price mono">$${r.price.toFixed(2)}</span>
-                        <button class="btn btn-secondary btn-sm rec-add-btn" data-id="${r.id}" style="padding: 2px 8px; font-size: 0.72rem;">+ Add</button>
+            this.vm.model.recommendations.forEach(r => {
+                const el = document.createElement("div");
+                el.className = "rec-unit";
+                el.innerHTML = `
+                    <img src="${r.image_url}" class="rec-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300';">
+                    <div class="rec-info">
+                        <div class="rec-title">${r.title}</div>
+                        <div class="rec-reason">${r.reason}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                            <span class="rec-price mono">$${r.price.toFixed(2)}</span>
+                            <button class="btn btn-secondary btn-sm rec-add-btn" data-id="${r.id}" style="padding: 2px 8px; font-size: 0.72rem;">+ Add</button>
+                        </div>
                     </div>
-                </div>
-            `;
-            grid.appendChild(el);
+                `;
+                g.appendChild(el);
+            });
         });
 
-        grid.querySelectorAll(".rec-add-btn").forEach(btn => {
+        document.querySelectorAll(".rec-add-btn").forEach(btn => {
             btn.addEventListener("click", async () => {
                 const prod = this.vm.model.products.find(p => p.id === btn.dataset.id) || {
                     id: btn.dataset.id,
@@ -1301,6 +1342,7 @@ class StoreView {
         const totalFormatted = `$${this.vm.model.cart.total_price.toFixed(2)}`;
         document.getElementById("cartSubtotal").textContent = totalFormatted;
         document.getElementById("cartTotal").textContent = totalFormatted;
+        this.renderRecommendations();
     }
 
     renderOrders() {
