@@ -510,9 +510,22 @@ class StoreViewModel {
         await Promise.all(this.model.servicesMesh.map(async (svc) => {
             const start = performance.now();
             try {
-                const res = await fetch(`${this.apiBase}/${svc.id}/health`, { signal: AbortSignal.timeout(2500) });
-                results[svc.id] = { status: res.ok ? "UP" : "ERR", latency: Math.round(performance.now() - start) };
+                let signal;
+                if (typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function") {
+                    signal = AbortSignal.timeout(3500);
+                } else {
+                    const ctrl = new AbortController();
+                    setTimeout(() => ctrl.abort(), 3500);
+                    signal = ctrl.signal;
+                }
+                const res = await fetch(`${this.apiBase}/${svc.id}/health?_t=${Date.now()}`, { 
+                    signal, 
+                    cache: "no-store" 
+                });
+                const dur = Math.max(1, Math.round(performance.now() - start));
+                results[svc.id] = { status: res.ok ? "UP" : "ERR", latency: dur };
             } catch (e) {
+                console.warn(`Probe failed for ${svc.id}:`, e);
                 results[svc.id] = { status: "DOWN", latency: 0 };
             }
         }));
@@ -689,7 +702,22 @@ class StoreView {
             this.showToast("Audit polled");
         });
 
-        document.getElementById("checkMeshBtn").addEventListener("click", () => this.renderMesh(true));
+        const checkMeshBtn = document.getElementById("checkMeshBtn");
+        if (checkMeshBtn) {
+            checkMeshBtn.addEventListener("click", async () => {
+                checkMeshBtn.disabled = true;
+                const prevHtml = checkMeshBtn.innerHTML;
+                checkMeshBtn.innerHTML = `<span class="mono">Probing 12 nodes...</span>`;
+                try {
+                    await this.renderMesh(true);
+                } catch (err) {
+                    console.error("Cluster probe error:", err);
+                    this.showToast("Cluster probe error: " + err.message);
+                } finally {
+                    checkMeshBtn.disabled = false;
+                }
+            });
+        }
 
         // Auto-fill Helpers (clean, unobtrusive)
         document.getElementById("fillDemoAddress").addEventListener("click", () => {
@@ -1265,22 +1293,110 @@ class StoreView {
 
     async renderMesh(probe = false) {
         const grid = document.getElementById("servicesMeshGrid");
+        const summaryStrip = document.getElementById("meshProbeSummary");
+        const checkBtn = document.getElementById("checkMeshBtn");
+
+        let health = {};
+        if (probe) {
+            health = await this.vm.probeCluster();
+
+            // Calculate aggregate metrics
+            const statuses = Object.values(health);
+            const upCount = statuses.filter(s => s.status === "UP").length;
+            const validLatencies = statuses.filter(s => s.status === "UP").map(s => s.latency);
+            const avgLat = validLatencies.length > 0 
+                ? (validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length).toFixed(1)
+                : 0;
+            const minLat = validLatencies.length > 0 ? Math.min(...validLatencies) : 0;
+            const maxLat = validLatencies.length > 0 ? Math.max(...validLatencies) : 0;
+
+            // 1. Update summary strip above diagram
+            if (summaryStrip) {
+                summaryStrip.style.display = "flex";
+                const pssStatus = document.getElementById("pssClusterStatus");
+                const pssAvg = document.getElementById("pssAvgLatency");
+                const pssMinMax = document.getElementById("pssMinMaxLatency");
+                if (pssStatus) {
+                    pssStatus.textContent = `${upCount} / ${this.vm.model.servicesMesh.length} UP`;
+                    pssStatus.className = `pss-val ${upCount === this.vm.model.servicesMesh.length ? 'text-green' : 'text-rose'}`;
+                }
+                if (pssAvg) pssAvg.textContent = `${avgLat} ms`;
+                if (pssMinMax) pssMinMax.textContent = `${minLat}ms / ${maxLat}ms`;
+            }
+
+            // 2. Update Header Telemetry pill
+            const telemLat = document.getElementById("telemetryLatency");
+            if (telemLat) telemLat.textContent = `${avgLat}ms`;
+
+            // 3. Update Button label
+            if (checkBtn) {
+                checkBtn.innerHTML = `✓ Probed (${avgLat}ms) &bull; Refresh`;
+            }
+
+            // 4. Update SVG Diagram nodes with live latency & highlight glow
+            const svgMap = {
+                catalog: "sn-catalog",
+                search: "sn-search",
+                recommendations: "sn-recs",
+                reviews: "sn-reviews",
+                cart: "sn-cart",
+                orders: "sn-orders",
+                payments: "sn-payments",
+                auth: "sn-auth",
+                audit: "sn-audit",
+                notifications: "sn-notif",
+                analytics: "sn-analytics",
+                support: "sn-support"
+            };
+
+            Object.entries(svgMap).forEach(([svcId, svgNodeId]) => {
+                const g = document.getElementById(svgNodeId);
+                const h = health[svcId];
+                if (g && h) {
+                    const rect = g.querySelector("rect:first-child");
+                    if (rect) {
+                        const originalStroke = rect.getAttribute("stroke");
+                        rect.style.transition = "stroke 0.3s ease, stroke-width 0.3s ease";
+                        rect.setAttribute("stroke", h.status === "UP" ? "#10b981" : "#f43f5e");
+                        rect.setAttribute("stroke-width", "2");
+                        setTimeout(() => {
+                            rect.setAttribute("stroke", originalStroke);
+                            rect.setAttribute("stroke-width", "1.3");
+                        }, 2500);
+                    }
+                    const texts = g.querySelectorAll("text");
+                    texts.forEach(t => {
+                        if (t.textContent.trim().startsWith(":80")) {
+                            const port = t.textContent.trim().split(" ")[0].replace(/[^0-9]/g, "");
+                            t.textContent = `:${port} (${h.latency}ms)`;
+                        }
+                    });
+                }
+            });
+
+            // 5. Toast notification
+            this.showToast(`Probed 12 nodes: ${upCount}/12 UP (avg ${avgLat}ms)`);
+        }
+
         if (!grid) return;
         grid.innerHTML = "";
 
-        const health = probe ? await this.vm.probeCluster() : {};
-
         this.vm.model.servicesMesh.forEach(svc => {
             const card = document.createElement("div");
-            card.className = "node-box";
-            const h = health[svc.id] || { status: "ONLINE", latency: 3 };
+            card.className = "node-box" + (probe ? " node-probed" : "");
+            const h = health[svc.id] || (probe ? { status: "DOWN", latency: 0 } : { status: "ONLINE", latency: "READY" });
             const isDown = h.status === "DOWN";
+            const isReady = h.latency === "READY";
+
+            const badgeBg = isDown ? 'rgba(244,63,94,0.15)' : (isReady ? 'rgba(148,163,184,0.15)' : 'rgba(16,185,129,0.15)');
+            const badgeColor = isDown ? '#f43f5e' : (isReady ? '#94a3b8' : '#6ee7b7');
+            const latencyText = isReady ? 'READY' : `${h.latency}ms`;
 
             card.innerHTML = `
                 <div class="node-box-head">
                     <span class="node-name">${svc.name}</span>
-                    <span class="node-chip" style="background: ${isDown ? 'rgba(244,63,94,0.15)' : 'rgba(16,185,129,0.15)'}; color: ${isDown ? '#f43f5e' : '#6ee7b7'};">
-                        ${h.status} (${h.latency}ms)
+                    <span class="node-chip" style="background: ${badgeBg}; color: ${badgeColor};">
+                        ${h.status} (${latencyText})
                     </span>
                 </div>
                 <div class="node-info-text">${svc.desc}</div>

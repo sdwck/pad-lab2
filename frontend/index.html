@@ -10,7 +10,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/style.css?v=20261030_v105">
+    <link rel="stylesheet" href="/style.css?v=20261030_v106">
     <style>
         html {
             color-scheme: dark;
@@ -1014,6 +1014,44 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
             gap: 14px;
+        }
+
+        .probe-summary-strip {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: #09090d;
+            border: 1px solid #1e1e28;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .pss-metric {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+
+        .pss-label {
+            color: var(--text-muted);
+        }
+
+        .pss-val {
+            font-weight: 600;
+        }
+
+        .node-probed {
+            animation: nodePulse 0.4s ease;
+        }
+
+        @keyframes nodePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.015); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+            100% { transform: scale(1); }
         }
 
         .node-box {
@@ -2020,6 +2058,14 @@
                 <button class="btn btn-secondary btn-sm" id="checkMeshBtn">Probe Node Latencies</button>
             </div>
 
+            <!-- Dynamic Live Probe Summary Strip -->
+            <div id="meshProbeSummary" class="probe-summary-strip" style="display: none;">
+                <div class="pss-metric"><span class="pss-label">Cluster Status:</span> <span class="pss-val text-green" id="pssClusterStatus">12 / 12 UP</span></div>
+                <div class="pss-metric"><span class="pss-label">Avg Latency:</span> <span class="pss-val mono text-cyan" id="pssAvgLatency">--</span></div>
+                <div class="pss-metric"><span class="pss-label">Min / Max:</span> <span class="pss-val mono" id="pssMinMaxLatency">--</span></div>
+                <div class="pss-metric"><span class="pss-label">Ingress Route:</span> <span class="pss-val mono">Gateway :80 &rarr; Microservices</span></div>
+            </div>
+
             <!-- Visual Architecture Blueprint (SVG Schema) -->
             <div class="arch-blueprint-card">
                 <div class="abc-header">
@@ -2622,7 +2668,7 @@
         </div>
     </div>
 
-    <script src="/app.js?v=20261030_v105"></script>
+    <script src="/app.js?v=20261030_v106"></script>
 </body>
 
 </html>

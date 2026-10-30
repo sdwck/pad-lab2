@@ -890,6 +890,44 @@ body {
     gap: 14px;
 }
 
+.probe-summary-strip {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #09090d;
+    border: 1px solid #1e1e28;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    animation: fadeIn 0.25s ease;
+}
+
+.pss-metric {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.pss-label {
+    color: var(--text-muted);
+}
+
+.pss-val {
+    font-weight: 600;
+}
+
+.node-probed {
+    animation: nodePulse 0.4s ease;
+}
+
+@keyframes nodePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.015); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+    100% { transform: scale(1); }
+}
+
 .node-box {
     background: var(--bg-surface);
     border: 1px solid var(--border);
