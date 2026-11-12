@@ -15,6 +15,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+echo [*] Ensuring Docker images are tagged for Kubernetes...
+docker tag pad-lab3-order-service:latest pad-backend:latest >nul 2>nul
+docker tag pad-lab3-gateway:latest pad-gateway:latest >nul 2>nul
+
 echo [*] Applying Kubernetes manifests in namespace: pad...
 kubectl apply -f k8s/
 
