@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>БЛОК 4. САМОВОССТАНОВЛЕНИЕ, МАСШТАБИРОВАНИЕ И КОМАНДЫ ДЕМОНСТРАЦИИ</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background-color: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 36px 44px;
+    width: 1200px;
+}
+.sheet-header {
+    border-bottom: 2px solid #30363d;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.sheet-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #58a6ff;
+    letter-spacing: -0.5px;
+}
+.sheet-subtitle {
+    font-size: 13px;
+    color: #8b949e;
+    margin-top: 4px;
+}
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    background: #1f6feb26;
+    color: #58a6ff;
+    border: 1px solid #1f6feb66;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #58a6ff;
+    border-radius: 2px;
+}
+p, ul, ol {
+    margin-bottom: 12px;
+    color: #c9d1d9;
+}
+ul, ol {
+    padding-left: 22px;
+}
+li {
+    margin-bottom: 6px;
+}
+strong {
+    color: #f0f6fc;
+    font-weight: 600;
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    padding: 2px 6px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #79c0ff;
+}
+pre {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 8px 0 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #e6edf3;
+}
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #58a6ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13.5px;
+}
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border: 1px solid #30363d;
+}
+th {
+    background: #161b22;
+    color: #f0f6fc;
+    font-weight: 600;
+}
+tr:nth-child(even) td {
+    background: #0d1117;
+}
+tr:nth-child(odd) td {
+    background: #161b2244;
+}
+.highlight {
+    color: #7ee787;
+    font-weight: 600;
+}
+.warning {
+    color: #ffa657;
+    font-weight: 600;
+}
+.danger {
+    color: #ff7b72;
+    font-weight: 600;
+}
+</style>
+</head>
+<body>
+    <div class="sheet-header">
+        <div>
+            <div class="sheet-title">БЛОК 4. САМОВОССТАНОВЛЕНИЕ, МАСШТАБИРОВАНИЕ И КОМАНДЫ ДЕМОНСТРАЦИИ</div>
+            <div class="sheet-subtitle">Шпаргалка к защите Лабораторной работы №3 (PAD) • UTM FCIM</div>
+        </div>
+        <div class="badge">04 / 04</div>
+    </div>
+    
+        <h2>1. Как работает Self-Healing (Самовосстановление)?</h2>
+        <ol>
+            <li>Администратор или сбой удаляет рабочий под: <code>kubectl delete pod order-service-xxx -n pad</code>.</li>
+            <li>Контроллер ReplicaSet выполняет непрерывный цикл сверки (<strong>Reconciliation Loop</strong>):
+                <pre style="margin: 6px 0;">Desired State (2) != Current State (1)  -->  TRIGGER RECOVERY</pre>
+            </li>
+            <li>ReplicaSet отправляет запрос в <code>kube-apiserver</code> на создание нового пода.</li>
+            <li><code>kube-scheduler</code> находит ноду $ightarrow$ <code>kubelet</code> стартует контейнер.</li>
+            <li>После успешного прохождения <code>readinessProbe</code> под добавляется в Service Endpoints.</li>
+            <li><strong>Итог:</strong> система восстановилась за 1–3 секунды без потери запросов (<strong>Zero Downtime</strong>).</li>
+        </ol>
+
+        <h2>2. Как работает масштабирование (Horizontal Pod Scaling)?</h2>
+        <ul>
+            <li>Команда: <code>kubectl scale deployment order-service --replicas=4 -n pad</code></li>
+            <li>Deployment меняет desired replicas с 2 до 4. ReplicaSet параллельно запускает 2 новых пода.</li>
+            <li>Как только поды становятся Ready, kube-proxy автоматически включает их в балансировку Round-Robin.</li>
+        </ul>
+
+        <h2>3. Сводная таблица команд для защиты перед преподавателем</h2>
+        <table>
+            <tr><th>Действие</th><th>Команда kubectl</th><th>Что сказать преподавателю</th></tr>
+            <tr>
+                <td><strong>1. Показать все поды</strong></td>
+                <td><code>kubectl get pods -n pad -o wide</code></td>
+                <td>«Все 14–17 подов в статусе Running, 1/1 Ready, 0 рестартов, каждый под имеет собственный IP в кластере».</td>
+            </tr>
+            <tr>
+                <td><strong>2. Показать сервисы</strong></td>
+                <td><code>kubectl get svc -n pad</code></td>
+                <td>«13 сервисов ClusterIP обеспечивают внутреннюю связь через CoreDNS. Внешний шлюз NodePort открыт на порту 30080».</td>
+            </tr>
+            <tr>
+                <td><strong>3. Показать Deployments</strong></td>
+                <td><code>kubectl get deployments -n pad</code></td>
+                <td>«Декларативные развертывания. Сервисы каталога и заказов имеют по 2 готовые реплики для обеспечения высокой доступности».</td>
+            </tr>
+            <tr>
+                <td><strong>4. Показать логи пода</strong></td>
+                <td><code>kubectl logs -l app=order-service -n pad --tail=20</code></td>
+                <td>«Демонстрация логов Uvicorn: регулярные проверки /health возвращают 200 OK, запросы обрабатываются корректно».</td>
+            </tr>
+            <tr>
+                <td><strong>5. Масштабирование</strong></td>
+                <td><code>kubectl scale deployment order-service --replicas=4 -n pad</code></td>
+                <td>«Показываем эластичность: контроллер моментально поднимает 2 новые реплики и вводит их в пул балансировки».</td>
+            </tr>
+            <tr>
+                <td><strong>6. Самовосстановление</strong></td>
+                <td><code>kubectl delete pod &lt;pod-name&gt; -n pad</code></td>
+                <td>«Имитируем аварию: под переходит в Terminating, ReplicaSet фиксирует дефицит и мгновенно создает новый здоровый под».</td>
+            </tr>
+            <tr>
+                <td><strong>7. Проверка API</strong></td>
+                <td><code>curl http://localhost/api/catalog/products</code></td>
+                <td>«Шлюз Gateway принимает внешний HTTP-запрос и перенаправляет его по CoreDNS на catalog-service:8002».</td>
+            </tr>
+        </table>
+        
+</body>
+</html>

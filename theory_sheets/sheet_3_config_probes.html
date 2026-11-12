@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>БЛОК 3. КОНФИГУРАЦИЯ, НАДЕЖНОСТЬ И РЕСУРСЫ</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background-color: #0d1117;
+    color: #e6edf3;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 36px 44px;
+    width: 1200px;
+}
+.sheet-header {
+    border-bottom: 2px solid #30363d;
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.sheet-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #58a6ff;
+    letter-spacing: -0.5px;
+}
+.sheet-subtitle {
+    font-size: 13px;
+    color: #8b949e;
+    margin-top: 4px;
+}
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 4px;
+    background: #1f6feb26;
+    color: #58a6ff;
+    border: 1px solid #1f6feb66;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+h2::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #58a6ff;
+    border-radius: 2px;
+}
+p, ul, ol {
+    margin-bottom: 12px;
+    color: #c9d1d9;
+}
+ul, ol {
+    padding-left: 22px;
+}
+li {
+    margin-bottom: 6px;
+}
+strong {
+    color: #f0f6fc;
+    font-weight: 600;
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    padding: 2px 6px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    color: #79c0ff;
+}
+pre {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin: 8px 0 14px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #e6edf3;
+}
+.compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+.card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #58a6ff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13.5px;
+}
+th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border: 1px solid #30363d;
+}
+th {
+    background: #161b22;
+    color: #f0f6fc;
+    font-weight: 600;
+}
+tr:nth-child(even) td {
+    background: #0d1117;
+}
+tr:nth-child(odd) td {
+    background: #161b2244;
+}
+.highlight {
+    color: #7ee787;
+    font-weight: 600;
+}
+.warning {
+    color: #ffa657;
+    font-weight: 600;
+}
+.danger {
+    color: #ff7b72;
+    font-weight: 600;
+}
+</style>
+</head>
+<body>
+    <div class="sheet-header">
+        <div>
+            <div class="sheet-title">БЛОК 3. КОНФИГУРАЦИЯ, НАДЕЖНОСТЬ И РЕСУРСЫ</div>
+            <div class="sheet-subtitle">Шпаргалка к защите Лабораторной работы №3 (PAD) • UTM FCIM</div>
+        </div>
+        <div class="badge">03 / 04</div>
+    </div>
+    
+        <h2>1. Разделение конфигурации: ConfigMap vs Secret</h2>
+        <p>Соответствует III фактору <strong>12-Factor App</strong>: конфигурация строго отделена от исполняемого кода.</p>
+        <div class="compare-grid">
+            <div class="card">
+                <div class="card-title">ConfigMap (pad-config)</div>
+                <ul>
+                    <li>Хранит несекретные переменные окружения.</li>
+                    <li>В проекте: URLs внутренних сервисов (<code>CATALOG_URL: http://catalog-service:8002</code>), <code>REDIS_URL</code>, <code>LOG_LEVEL: INFO</code>, <code>ENVIRONMENT: kubernetes</code>.</li>
+                    <li>Инжектируется через <code>configMapKeyRef</code> или <code>envFrom</code>.</li>
+                </ul>
+            </div>
+            <div class="card">
+                <div class="card-title">Secret (pad-secrets)</div>
+                <ul>
+                    <li>Хранит конфиденциальные ключи и токены.</li>
+                    <li>В проекте: <code>JWT_SECRET</code>, <code>PAYMENT_GATEWAY_KEY</code>, <code>ADMIN_TOKEN</code>.</li>
+                    <li>Значения кодируются в Base64.</li>
+                    <li>Разграничение доступа через RBAC, сокрытие в логах, шифрование в etcd at rest.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>2. Проверки здоровья: LivenessProbe vs ReadinessProbe</h2>
+        <div class="compare-grid">
+            <div class="card" style="border-color: #ff7b7244;">
+                <div class="card-title danger">LivenessProbe (Жизнеспособность)</div>
+                <ul>
+                    <li><strong>Вопрос:</strong> Контейнер работает или завис (Deadlock, утечка памяти)?</li>
+                    <li><strong>Реакция при падении:</strong> Kubelet принудительно убивает контейнер (SIGKILL) и перезапускает его.</li>
+                    <li>В проекте: <code>httpGet /health</code>, timeout 3s, failureThreshold 3.</li>
+                </ul>
+            </div>
+            <div class="card" style="border-color: #7ee78744;">
+                <div class="card-title highlight">ReadinessProbe (Готовность к трафику)</div>
+                <ul>
+                    <li><strong>Вопрос:</strong> Готов ли контейнер принимать трафик прямо сейчас?</li>
+                    <li><strong>Реакция при падении:</strong> Контейнер <strong>не перезапускается</strong>. Его IP исключается из Endpoints сервиса, трафик временно не идет.</li>
+                    <li>В проекте: <code>httpGet /health</code>, timeout 3s, period 10s.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>3. Управление ресурсами: Requests vs Limits</h2>
+        <table>
+            <tr><th>Параметр</th><th>Назначение</th><th>Поведение при превышении</th></tr>
+            <tr>
+                <td><strong>Requests</strong><br><code>cpu: 50m</code><br><code>memory: 64Mi</code></td>
+                <td>Гарантированный минимум ресурсов. Планировщик (kube-scheduler) размещает под только на ноду с достаточным объемом свободных requests.</td>
+                <td>Если свободных requests нет на нодах кластера — под переходит в статус <code>Pending</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Limits</strong><br><code>cpu: 300m</code><br><code>memory: 256Mi</code></td>
+                <td>Максимальный потолок потребления ресурсов контейнером.</td>
+                <td>
+                    <strong>CPU:</strong> процесс не убивается, включается <strong>CPU Throttling</strong> (урезаются такты ядра).<br>
+                    <strong>RAM:</strong> контейнер немедленно убивается ядром: <strong>OOMKilled</strong> (Exit Code 137).
+                </td>
+            </tr>
+        </table>
+
+        <h2>4. Постоянство данных: PersistentVolumeClaim (PVC)</h2>
+        <ul>
+            <li>Поды эфемерны: файловая система контейнера сбрасывается при пересоздании.</li>
+            <li><strong>PVC (pad-data-pvc):</strong> запрос на постоянный диск размером 1Gi (режим <code>ReadWriteOnce</code>).</li>
+            <li>Стейтфул-сервисы монтируют том в <code>/data</code> с опцией <code>subPath: &lt;service&gt;</code>, что изолирует данные каждого микросервиса (JSON-файлы каталога, заказов, платежей) внутри одного тома.</li>
+        </ul>
+        
+</body>
+</html>
