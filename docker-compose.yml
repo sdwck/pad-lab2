@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_auth
     command: python -m uvicorn services.auth.main:app --host 0.0.0.0 --port 8001
     ports:
@@ -35,6 +36,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_catalog
     command: python -m uvicorn services.catalog.main:app --host 0.0.0.0 --port 8002
     ports:
@@ -50,6 +52,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_search
     command: python -m uvicorn services.search.main:app --host 0.0.0.0 --port 8003
     ports:
@@ -69,6 +72,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_cart
     command: python -m uvicorn services.cart.main:app --host 0.0.0.0 --port 8004
     ports:
@@ -84,6 +88,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_order
     command: python -m uvicorn services.order.main:app --host 0.0.0.0 --port 8005
     ports:
@@ -106,6 +111,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_payment
     command: python -m uvicorn services.payment.main:app --host 0.0.0.0 --port 8006
     ports:
@@ -128,6 +134,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_review
     command: python -m uvicorn services.review.main:app --host 0.0.0.0 --port 8007
     ports:
@@ -143,6 +150,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_recommendation
     command: python -m uvicorn services.recommendation.main:app --host 0.0.0.0 --port 8008
     ports:
@@ -158,6 +166,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_notification
     command: python -m uvicorn services.notification.main:app --host 0.0.0.0 --port 8009
     ports:
@@ -173,6 +182,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_analytics
     command: python -m uvicorn services.analytics.main:app --host 0.0.0.0 --port 8010
     ports:
@@ -190,6 +200,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_support
     command: python -m uvicorn services.support.main:app --host 0.0.0.0 --port 8011
     ports:
@@ -205,6 +216,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: pad-backend:latest
     container_name: pad_audit
     command: python -m uvicorn services.audit.main:app --host 0.0.0.0 --port 8012
     ports:
@@ -220,6 +232,7 @@ services:
     build:
       context: .
       dockerfile: gateway/Dockerfile
+    image: pad-gateway:latest
     container_name: pad_gateway
     ports:
       - "80:80"
