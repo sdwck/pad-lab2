@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>АРХИТЕКТУРА И СЕТЬ KUBERNETES</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background-color: #ffffff;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 40px 48px;
+    width: 1050px;
+}
+.doc-header {
+    border-bottom: 2px solid #111827;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+.doc-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+}
+.doc-section {
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin: 18px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
+}
+p, ul, ol {
+    margin-bottom: 10px;
+    color: #1f2937;
+}
+ul, ol {
+    padding-left: 20px;
+}
+li {
+    margin-bottom: 5px;
+}
+strong {
+    color: #111827;
+    font-weight: 600;
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    padding: 2px 5px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    color: #111827;
+}
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0 12px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #0f172a;
+}
+.box-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 10px 0 14px;
+}
+.box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 12px 14px;
+}
+.box-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #111827;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 13.5px;
+}
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #d1d5db;
+}
+th {
+    background: #f3f4f6;
+    color: #111827;
+    font-weight: 700;
+}
+tr:nth-child(even) td {
+    background: #f9fafb;
+}
+</style>
+</head>
+<body>
+    <div class="doc-header">
+        <div class="doc-section">Раздел 2</div>
+        <div class="doc-title">АРХИТЕКТУРА И СЕТЬ KUBERNETES</div>
+    </div>
+    
+        <h2>1. Зачем нужен Kubernetes, если есть Docker?</h2>
+        <p>Docker запускает контейнеры на одном хосте. Kubernetes оркестрирует распределенный кластер:</p>
+        <ul>
+            <li><strong>Self-Healing:</strong> автоматический перезапуск упавших контейнеров и перенос на здоровые ноды.</li>
+            <li><strong>Auto-scaling:</strong> горизонтальное масштабирование количества реплик по нагрузке.</li>
+            <li><strong>Service Discovery & Load Balancing:</strong> стабильный DNS и виртуальный IP с балансировкой трафика.</li>
+            <li><strong>Zero-downtime Rollouts:</strong> постепенное обновление версий (RollingUpdate) без остановки системы.</li>
+        </ul>
+
+        <h2>2. Базовые сущности: Pod, Node, Control Plane</h2>
+        <ul>
+            <li><strong>Pod (Под):</strong> минимальная единица развертывания. Группа из 1+ контейнеров, делящих общий сетевой стек (IP, localhost) и тома. Поды эфемерны: их IP меняются при перезапуске.</li>
+            <li><strong>Node (Узел):</strong> рабочий сервер кластера (компоненты: kubelet, kube-proxy, CRI runtime).</li>
+            <li><strong>Control Plane:</strong>
+                <ul>
+                    <li><code>kube-apiserver</code> — центральный REST API кластера, через него общаются все компоненты.</li>
+                    <li><code>etcd</code> — отказоустойчивое key-value хранилище состояния всего кластера.</li>
+                    <li><code>kube-scheduler</code> — выбирает узел для размещения пода с учетом CPU/RAM requests.</li>
+                    <li><code>kube-controller-manager</code> — запускает контроллеры сверки (Node, Deployment, ReplicaSet).</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>3. Что делает Deployment и ReplicaSet?</h2>
+        <ul>
+            <li><strong>ReplicaSet:</strong> контроллер, гарантирующий, что в кластере запущено ровно заданное число реплик ($N$).</li>
+            <li><strong>Deployment:</strong> декларативное описание желаемого состояния приложения над ReplicaSet.
+                <ul>
+                    <li>Обеспечивает обновление <strong>RollingUpdate</strong>: создает новый ReplicaSet, поднимает новые поды по одному, дожидается готовности (readinessProbe), затем гасит старые поды.</li>
+                    <li>Позволяет выполнить откат версии: <code>kubectl rollout undo</code>.</li>
+                </ul>
+            </li>
+            <li><strong>High Availability в проекте:</strong> для <code>order-service</code> и <code>catalog-service</code> сразу задано <code>replicas: 2</code> для исключения единой точки отказа.</li>
+        </ul>
+
+        <h2>4. Kubernetes Service и CoreDNS: почему НЕ localhost?</h2>
+        <div class="box" style="margin-bottom: 10px;">
+            <p style="margin: 0;"><strong>Почему сервисы не могут обращаться по localhost?</strong><br>
+            Сетевой стек каждого пода строго изолирован. <code>localhost</code> указывает только на контейнеры внутри этого же пода. Запрос от <code>order-service</code> на <code>http://localhost:8002</code> вернет ошибку, так как каталог запущен в отдельном поде.
+            </p>
+        </div>
+        <ul>
+            <li><strong>Решение:</strong> сущность <strong>Service</strong> предоставляет постоянный виртуальный IP (ClusterIP) и стабильное DNS-имя в кластере (CoreDNS).</li>
+            <li>Вызов внутри кластера: <code>http://catalog-service:8002</code>. Служба <code>kube-proxy</code> перехватывает обращение к ClusterIP и транслирует его на реальные IP-адреса живых подов через iptables/IPVS.</li>
+        </ul>
+
+        <h2>5. Типы сервисов (Service Types)</h2>
+        <table>
+            <tr><th>Тип сервиса</th><th>Где доступен</th><th>Назначение</th></tr>
+            <tr><td><strong>ClusterIP</strong> (default)</td><td>Только внутри кластера</td><td>Все 12 backend-микросервисов и Redis. Изоляция от внешнего мира.</td></tr>
+            <tr><td><strong>NodePort</strong></td><td>Снаружи на порту ноды (30000–32767)</td><td>Шлюз <code>gateway-service</code> на порту <strong>:30080</strong> для доступа клиентов из браузера.</td></tr>
+            <tr><td><strong>LoadBalancer</strong></td><td>Снаружи через Cloud Provider</td><td>Выделение внешнего публичного IP облачным провайдером (AWS/GCP).</td></tr>
+            <tr><td><strong>Ingress</strong></td><td>Снаружи через HTTP L7 Proxy</td><td>Маршрутизация по URL-путям, виртуальный хостинг, TLS/SSL терминация.</td></tr>
+        </table>
+        
+</body>
+</html>

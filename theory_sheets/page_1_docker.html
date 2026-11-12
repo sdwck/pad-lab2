@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>DOCKER И КОНТЕЙНЕРИЗАЦИЯ</title>
+    <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    background-color: #ffffff;
+    color: #111827;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    padding: 40px 48px;
+    width: 1050px;
+}
+.doc-header {
+    border-bottom: 2px solid #111827;
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+}
+.doc-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+}
+.doc-section {
+    font-size: 13px;
+    color: #4b5563;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    margin: 18px 0 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
+}
+p, ul, ol {
+    margin-bottom: 10px;
+    color: #1f2937;
+}
+ul, ol {
+    padding-left: 20px;
+}
+li {
+    margin-bottom: 5px;
+}
+strong {
+    color: #111827;
+    font-weight: 600;
+}
+code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    padding: 2px 5px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    color: #111827;
+}
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0 12px;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #0f172a;
+}
+.box-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 10px 0 14px;
+}
+.box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 12px 14px;
+}
+.box-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #111827;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 13.5px;
+}
+th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border: 1px solid #d1d5db;
+}
+th {
+    background: #f3f4f6;
+    color: #111827;
+    font-weight: 700;
+}
+tr:nth-child(even) td {
+    background: #f9fafb;
+}
+</style>
+</head>
+<body>
+    <div class="doc-header">
+        <div class="doc-section">Раздел 1</div>
+        <div class="doc-title">DOCKER И КОНТЕЙНЕРИЗАЦИЯ</div>
+    </div>
+    
+        <h2>1. В чем разница между Docker и виртуальной машиной (VM)?</h2>
+        <div class="box-grid">
+            <div class="box">
+                <div class="box-title">Виртуальная машина (VM)</div>
+                <ul>
+                    <li>Работает поверх гипервизора.</li>
+                    <li>Внутри <strong>полноценная гостевая ОС</strong> со своим ядром, системными службами и драйверами.</li>
+                    <li>Высокий оверхед: гигабайты диска и ОЗУ на каждую VM.</li>
+                    <li>Холодный старт занимает минуты.</li>
+                </ul>
+            </div>
+            <div class="box">
+                <div class="box-title">Контейнер Docker</div>
+                <ul>
+                    <li>Не содержит гостевого ядра, делит <strong>общее ядро хоста</strong>.</li>
+                    <li><strong>Namespaces:</strong> изолируют процессы (PID), сеть (NET), файловую систему (MNT), пользователей (USER).</li>
+                    <li><strong>Cgroups:</strong> жестко ограничивают и учитывают CPU, RAM, I/O.</li>
+                    <li>Минимальный оверхед: образ ~130 МБ, старт за доли секунды.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>2. Почему выбран базовый образ python:3.12-slim?</h2>
+        <ul>
+            <li><strong>Полный python:3.12 (~1 ГБ):</strong> перегружен компиляторами (gcc), сборочными библиотеками. Долго скачивается, увеличивает поверхность атаки (attack surface).</li>
+            <li><strong>python:3.12-slim (~130 МБ):</strong> содержит только минимальный рантайм Python и glibc. Меньше вес, меньше уязвимостей (CVE), быстрый деплой.</li>
+            <li><strong>Почему не Alpine:</strong> в Alpine используется musl libc вместо glibc. Из-за этого C-библиотеки Python компилируются при сборке и могут работать нестабильно. Debian-slim гарантирует нативную поддержку предсобранных wheels.</li>
+        </ul>
+
+        <h2>3. Зачем запускать приложение не от root (Non-root user)?</h2>
+        <ul>
+            <li>По умолчанию контейнер выполняется от <code>root</code> (UID 0). При уязвимости побега из контейнера (container breakout) атакующий получает полный контроль над хостом.</li>
+            <li><strong>Решение:</strong> создание системного пользователя <code>appuser</code> (UID 10001) и вызов инструкции <code>USER appuser</code>. Приложение работает без root-прав.</li>
+        </ul>
+
+        <h2>4. Порядок инструкций и кэширование слоев в Dockerfile</h2>
+        <div class="box-grid">
+            <div class="box">
+                <div class="box-title">&#x2717; Неправильный порядок</div>
+                <pre>COPY . .
+RUN pip install -r requirements.txt</pre>
+                <p style="font-size: 12.5px; color: #4b5563; margin: 0;">Любая правка строчки кода сбрасывает кэш. <code>pip install</code> запускается заново при каждом билде.</p>
+            </div>
+            <div class="box">
+                <div class="box-title">&#x2713; Правильный порядок (в проекте)</div>
+                <pre>COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .</pre>
+                <p style="font-size: 12.5px; color: #4b5563; margin: 0;">Зависимости меняются редко. Слой с установленными пакетами берется из кэша. Билд занимает секунды.</p>
+            </div>
+        </div>
+
+        <h2>5. Зачем нужен .dockerignore и почему секреты нельзя зашивать в образ?</h2>
+        <ul>
+            <li><strong>.dockerignore:</strong> исключает из контекста сборки <code>.git/</code>, <code>.venv/</code>, <code>__pycache__/</code>, <code>*.log</code>, тесты и локальные файлы данных. Ускоряет билд, снижает размер образа.</li>
+            <li><strong>Секреты:</strong> пароли и токены нельзя передавать через ENV/ARG в Dockerfile, так как они навсегда остаются в метаданных слоев (<code>docker history</code>). Секреты передаются исключительно в рантайме.</li>
+            <li><strong>Docker Compose:</strong> декларативный запуск мультиконтейнерного стека (14 сервисов, общая сеть bridge, тома данных, зависимости <code>depends_on</code>).</li>
+        </ul>
+        
+</body>
+</html>
