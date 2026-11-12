@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: recommendation-service
+  namespace: pad
+  labels:
+    app: recommendation-service
+    project: cloudmart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: recommendation-service
+  template:
+    metadata:
+      labels:
+        app: recommendation-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: recommendation
+          image: pad-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "uvicorn", "services.recommendation.main:app", "--host", "0.0.0.0", "--port", "8008"]
+          ports:
+            - containerPort: 8008
+              name: http
+          env:
+            - name: CATALOG_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: pad-config
+                  key: CATALOG_URL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8008
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8008
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recommendation-service
+  namespace: pad
+  labels:
+    app: recommendation-service
+spec:
+  type: ClusterIP
+  selector:
+    app: recommendation-service
+  ports:
+    - port: 8008
+      targetPort: 8008
+      name: http

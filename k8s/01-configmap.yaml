@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pad-config
+  namespace: pad
+  labels:
+    app.kubernetes.io/part-of: cloudmart
+data:
+  LOG_LEVEL: "INFO"
+  ENVIRONMENT: "kubernetes"
+  REDIS_URL: "redis://redis-service:6379"
+  AUTH_URL: "http://auth-service:8001"
+  CATALOG_URL: "http://catalog-service:8002"
+  SEARCH_URL: "http://search-service:8003"
+  CART_URL: "http://cart-service:8004"
+  ORDER_URL: "http://order-service:8005"
+  PAYMENT_URL: "http://payment-service:8006"
+  REVIEW_URL: "http://review-service:8007"
+  RECOMMENDATION_URL: "http://recommendation-service:8008"
+  NOTIFICATION_URL: "http://notification-service:8009"
+  ANALYTICS_URL: "http://analytics-service:8010"
+  SUPPORT_URL: "http://support-service:8011"
+  AUDIT_URL: "http://audit-service:8012"

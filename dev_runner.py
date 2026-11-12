@@ -61,7 +61,7 @@ def main():
     python_cmd = venv_py if os.path.exists(venv_py) else sys.executable
 
     print("=" * 65)
-    print("🚀 LAUNCHING 12 MICROSERVICES + API GATEWAY (PAD LAB 2)")
+    print("🚀 LAUNCHING 12 MICROSERVICES + API GATEWAY (PAD LAB 3)")
     print("=" * 65)
 
     env_base = os.environ.copy()

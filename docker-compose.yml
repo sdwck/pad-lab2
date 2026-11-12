@@ -1,3 +1,5 @@
+name: pad-lab3
+
 services:
   # In-Memory Cache with Persistence
   redis:
@@ -6,66 +8,84 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 1. Auth & Identity Microservice
   auth-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_auth
-    command: uvicorn services.auth.main:app --host 0.0.0.0 --port 8001
+    command: python -m uvicorn services.auth.main:app --host 0.0.0.0 --port 8001
     ports:
       - "8001:8001"
     environment:
       - DATA_FILE=/data/auth.json
+      - JWT_SECRET=pad-lab3-extremely-secure-jwt-key-2026
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 2. Product Catalog Microservice
   catalog-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_catalog
-    command: uvicorn services.catalog.main:app --host 0.0.0.0 --port 8002
+    command: python -m uvicorn services.catalog.main:app --host 0.0.0.0 --port 8002
     ports:
       - "8002:8002"
     environment:
       - DATA_FILE=/data/catalog.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 3. Search & Filtering Microservice
   search-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_search
-    command: uvicorn services.search.main:app --host 0.0.0.0 --port 8003
+    command: python -m uvicorn services.search.main:app --host 0.0.0.0 --port 8003
     ports:
       - "8003:8003"
     environment:
       - CATALOG_URL=http://catalog-service:8002
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - catalog-service
-      - redis
+      redis:
+        condition: service_healthy
+      catalog-service:
+        condition: service_started
     restart: unless-stopped
 
   # 4. Shopping Cart Microservice
   cart-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_cart
-    command: uvicorn services.cart.main:app --host 0.0.0.0 --port 8004
+    command: python -m uvicorn services.cart.main:app --host 0.0.0.0 --port 8004
     ports:
       - "8004:8004"
     environment:
       - DATA_FILE=/data/cart.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 5. Order Management Microservice
   order-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_order
-    command: uvicorn services.order.main:app --host 0.0.0.0 --port 8005
+    command: python -m uvicorn services.order.main:app --host 0.0.0.0 --port 8005
     ports:
       - "8005:8005"
     environment:
@@ -74,7 +94,7 @@ services:
       - NOTIFICATION_URL=http://notification-service:8009
       - AUDIT_URL=http://audit-service:8012
     volumes:
-      - ./data:/data
+      - pad_data:/data
     depends_on:
       - catalog-service
       - notification-service
@@ -83,9 +103,11 @@ services:
 
   # 6. Payment Gateway Microservice
   payment-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_payment
-    command: uvicorn services.payment.main:app --host 0.0.0.0 --port 8006
+    command: python -m uvicorn services.payment.main:app --host 0.0.0.0 --port 8006
     ports:
       - "8006:8006"
     environment:
@@ -94,7 +116,7 @@ services:
       - NOTIFICATION_URL=http://notification-service:8009
       - AUDIT_URL=http://audit-service:8012
     volumes:
-      - ./data:/data
+      - pad_data:/data
     depends_on:
       - order-service
       - notification-service
@@ -103,22 +125,26 @@ services:
 
   # 7. Reviews & Ratings Microservice
   review-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_review
-    command: uvicorn services.review.main:app --host 0.0.0.0 --port 8007
+    command: python -m uvicorn services.review.main:app --host 0.0.0.0 --port 8007
     ports:
       - "8007:8007"
     environment:
       - DATA_FILE=/data/reviews.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 8. Smart Recommendation Microservice
   recommendation-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_recommendation
-    command: uvicorn services.recommendation.main:app --host 0.0.0.0 --port 8008
+    command: python -m uvicorn services.recommendation.main:app --host 0.0.0.0 --port 8008
     ports:
       - "8008:8008"
     environment:
@@ -129,22 +155,26 @@ services:
 
   # 9. Notification & Events Microservice
   notification-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_notification
-    command: uvicorn services.notification.main:app --host 0.0.0.0 --port 8009
+    command: python -m uvicorn services.notification.main:app --host 0.0.0.0 --port 8009
     ports:
       - "8009:8009"
     environment:
       - DATA_FILE=/data/notifications.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 10. Analytics & BI Microservice
   analytics-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_analytics
-    command: uvicorn services.analytics.main:app --host 0.0.0.0 --port 8010
+    command: python -m uvicorn services.analytics.main:app --host 0.0.0.0 --port 8010
     ports:
       - "8010:8010"
     environment:
@@ -157,39 +187,42 @@ services:
 
   # 11. Customer Support & Tickets Microservice
   support-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_support
-    command: uvicorn services.support.main:app --host 0.0.0.0 --port 8011
+    command: python -m uvicorn services.support.main:app --host 0.0.0.0 --port 8011
     ports:
       - "8011:8011"
     environment:
       - DATA_FILE=/data/support.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # 12. Audit & Security Trail Microservice
   audit-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: pad_audit
-    command: uvicorn services.audit.main:app --host 0.0.0.0 --port 8012
+    command: python -m uvicorn services.audit.main:app --host 0.0.0.0 --port 8012
     ports:
       - "8012:8012"
     environment:
       - DATA_FILE=/data/audit.json
     volumes:
-      - ./data:/data
+      - pad_data:/data
     restart: unless-stopped
 
   # API Gateway & Reverse Proxy (Nginx)
   gateway:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
     container_name: pad_gateway
     ports:
       - "80:80"
-    volumes:
-      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - auth-service
       - catalog-service
@@ -204,3 +237,7 @@ services:
       - support-service
       - audit-service
     restart: unless-stopped
+
+volumes:
+  pad_data:
+    name: pad_data_volume

@@ -1,28 +1,35 @@
-# Python virtual environment
-.venv/
-venv/
-ENV/
-env/
-
-# Python bytecode & caches
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.pyd
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv
+venv/
+ENV/
 
-# Operating System files
+# Data and runtime caches
+data/*.json
+*.log
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# Editor & IDE artifacts
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Logs
-*.log
-
-# Executables
-*.exe
+# Cloudflare tunnel temporary files
+cloudflared.exe
+*.tunnel.log

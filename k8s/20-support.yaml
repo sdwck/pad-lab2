@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: support-service
+  namespace: pad
+  labels:
+    app: support-service
+    project: cloudmart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: support-service
+  template:
+    metadata:
+      labels:
+        app: support-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: support
+          image: pad-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "uvicorn", "services.support.main:app", "--host", "0.0.0.0", "--port", "8011"]
+          ports:
+            - containerPort: 8011
+              name: http
+          env:
+            - name: DATA_FILE
+              value: "/data/support.json"
+          volumeMounts:
+            - name: service-data
+              mountPath: /data
+              subPath: support
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8011
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8011
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+      volumes:
+        - name: service-data
+          persistentVolumeClaim:
+            claimName: pad-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: support-service
+  namespace: pad
+  labels:
+    app: support-service
+spec:
+  type: ClusterIP
+  selector:
+    app: support-service
+  ports:
+    - port: 8011
+      targetPort: 8011
+      name: http

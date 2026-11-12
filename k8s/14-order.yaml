@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: pad
+  labels:
+    app: order-service
+    project: cloudmart
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: order
+          image: pad-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "uvicorn", "services.order.main:app", "--host", "0.0.0.0", "--port", "8005"]
+          ports:
+            - containerPort: 8005
+              name: http
+          env:
+            - name: DATA_FILE
+              value: "/data/orders.json"
+            - name: CATALOG_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: pad-config
+                  key: CATALOG_URL
+            - name: NOTIFICATION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: pad-config
+                  key: NOTIFICATION_URL
+            - name: AUDIT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: pad-config
+                  key: AUDIT_URL
+          volumeMounts:
+            - name: service-data
+              mountPath: /data
+              subPath: order
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8005
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 2
+      volumes:
+        - name: service-data
+          persistentVolumeClaim:
+            claimName: pad-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: pad
+  labels:
+    app: order-service
+spec:
+  type: ClusterIP
+  selector:
+    app: order-service
+  ports:
+    - port: 8005
+      targetPort: 8005
+      name: http

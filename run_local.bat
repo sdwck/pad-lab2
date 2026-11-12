@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 echo ========================================================
 echo    CloudMart Distributed Microservices Platform
-echo              PAD Lab 2 - FCIM UTM
+echo              PAD Lab 3 - Docker & Kubernetes - FCIM UTM
 echo ========================================================
 
 if exist ".venv\Scripts\python.exe" (

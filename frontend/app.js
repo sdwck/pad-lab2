@@ -636,6 +636,7 @@ class StoreView {
                 if (tab === "support") this.renderSupport();
                 if (tab === "audit") this.renderAuditLogs();
                 if (tab === "topology") this.renderMesh();
+                if (tab === "k8s") this.renderK8sCluster();
                 if (tab === "traffic") {
                     this.startTrafficStream();
                 } else {
@@ -1744,6 +1745,229 @@ class StoreView {
     escapeHtml(str) {
         if (!str) return "";
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // =========================================================================
+    // KUBERNETES CLUSTER ORCHESTRATION & TELEMETRY (PAD LAB 3)
+    // =========================================================================
+
+    async renderK8sCluster() {
+        const grid = document.getElementById("k8sDeploymentsGrid");
+        const totalPodsEl = document.getElementById("k8sTotalPods");
+        const healthySubEl = document.getElementById("k8sPodsHealthySub");
+        const totalDeployEl = document.getElementById("k8sTotalDeployments");
+        const connStatusEl = document.getElementById("k8sConnStatus");
+
+        if (!grid) return;
+
+        try {
+            const res = await fetch("/api/k8s/status");
+            const data = await res.json();
+
+            const deployments = data.deployments || [];
+            const pods = data.pods || [];
+
+            // Update Metrics Strip
+            const runningPods = pods.filter(p => p.phase === "Running" && p.ready).length;
+            if (totalPodsEl) totalPodsEl.textContent = pods.length;
+            if (healthySubEl) healthySubEl.textContent = `${runningPods} / ${pods.length} Running (${Math.round((runningPods / (pods.length || 1)) * 100)}% Available)`;
+            if (totalDeployEl) totalDeployEl.textContent = deployments.length;
+
+            if (connStatusEl) {
+                connStatusEl.innerHTML = `● Cluster Connected (Namespace: ${data.namespace || 'pad'})`;
+                connStatusEl.style.color = "#10b981";
+            }
+
+            // Group Pods by App / Deployment
+            const podsByApp = {};
+            pods.forEach(p => {
+                const appKey = p.app;
+                if (!podsByApp[appKey]) podsByApp[appKey] = [];
+                podsByApp[appKey].push(p);
+            });
+
+            // Render Deployment Cards
+            grid.innerHTML = deployments.map(dep => {
+                const depPods = podsByApp[dep.name] || [];
+                const isHealthy = dep.ready === dep.desired && dep.ready > 0;
+                const statusColor = isHealthy ? "#10b981" : (dep.ready > 0 ? "#f59e0b" : "#ef4444");
+
+                return `
+                    <div style="background: #0f1015; border: 1px solid #22222a; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='#38bdf8'" onmouseleave="this.style.borderColor='#22222a'">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; box-shadow: 0 0 6px ${statusColor};"></span>
+                                        <span class="mono" style="font-weight: 700; font-size: 0.85rem; color: #f8fafc;">${dep.name}</span>
+                                    </div>
+                                    <div style="font-size: 0.72rem; color: #71717a; margin-top: 2px;">
+                                        Namespace: <span class="mono" style="color: #94a3b8;">pad</span> &bull; Strategy: <span class="mono" style="color: #94a3b8;">RollingUpdate</span>
+                                    </div>
+                                </div>
+                                <span class="mono" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.25);">
+                                    ${dep.ready} / ${dep.desired} Replicas
+                                </span>
+                            </div>
+
+                            <!-- Pod instances list -->
+                            <div style="margin: 10px 0; display: flex; flex-direction: column; gap: 6px;">
+                                ${depPods.map(pod => {
+                                    const podStatusColor = pod.phase === "Running" && pod.ready ? "#10b981" : (pod.phase === "Terminating" ? "#f59e0b" : "#ef4444");
+                                    return `
+                                        <div style="background: #07070a; border: 1px solid #1a1a24; border-radius: 6px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+                                            <div>
+                                                <div style="display: flex; align-items: center; gap: 6px;">
+                                                    <span style="color: ${podStatusColor}; font-size: 0.8rem;">●</span>
+                                                    <span class="mono" style="color: #e2e8f0; font-weight: 600;">${pod.name}</span>
+                                                </div>
+                                                <div class="mono" style="color: #64748b; font-size: 0.65rem; margin-top: 2px;">
+                                                    IP: ${pod.ip || '10.244.x.x'} &bull; Restarts: ${pod.restarts} &bull; Phase: ${pod.phase}
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; gap: 4px;">
+                                                <button class="btn btn-secondary btn-sm" style="font-size: 0.65rem; padding: 2px 6px; border-color: rgba(239, 68, 68, 0.3); color: #f87171;" onclick="app.killK8sPod('${pod.name}')" title="Test self-healing restart">
+                                                    Kill Pod
+                                                </button>
+                                                <button class="btn btn-secondary btn-sm" style="font-size: 0.65rem; padding: 2px 6px;" onclick="app.viewK8sLogs('${pod.name}')" title="View container logs">
+                                                    Logs
+                                                </button>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join("")}
+                            </div>
+                        </div>
+
+                        <!-- Scaling Controls -->
+                        <div style="border-top: 1px solid #1a1a24; padding-top: 8px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+                            <span class="mono" style="font-size: 0.68rem; color: #64748b;">
+                                Res: 50m / 64Mi
+                            </span>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 8px;" onclick="app.scaleK8sDeployment('${dep.name}', ${Math.max(1, dep.desired - 1)})" ${dep.desired <= 1 ? 'disabled style="opacity:0.4;"' : ''}>
+                                    - Scale Down
+                                </button>
+                                <button class="btn btn-secondary btn-sm" style="font-size: 0.68rem; padding: 2px 8px; border-color: #38bdf8; color: #38bdf8;" onclick="app.scaleK8sDeployment('${dep.name}', ${dep.desired + 1})">
+                                    + Scale Up
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            // Also refresh terminal CLI display
+            this.k8sExecCli("get pods");
+
+        } catch (err) {
+            console.error("Failed to load K8s cluster status:", err);
+            if (connStatusEl) {
+                connStatusEl.innerHTML = "○ Cluster Probing...";
+                connStatusEl.style.color = "#f59e0b";
+            }
+        }
+    }
+
+    async scaleK8sDeployment(depName, replicas) {
+        try {
+            const res = await fetch("/api/k8s/scale", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deployment: depName, replicas })
+            });
+            const data = await res.json();
+            this.showToast(`⚡ Scaled ${depName} to ${replicas} replicas: ${data.message || 'OK'}`);
+            this.renderK8sCluster();
+        } catch (err) {
+            this.showToast(`Error scaling deployment: ${err.message}`);
+        }
+    }
+
+    async quickScaleDemo() {
+        await this.scaleK8sDeployment("order-service", 3);
+        await this.scaleK8sDeployment("catalog-service", 3);
+        this.showToast("⚡ Demonstration: order-service and catalog-service scaled to 3 replicas for high availability!");
+    }
+
+    async killK8sPod(podName) {
+        try {
+            this.showToast(`🛑 Simulating crash: terminating ${podName}...`);
+            const res = await fetch("/api/k8s/kill", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pod: podName })
+            });
+            const data = await res.json();
+            this.showToast(`✅ ${data.message || 'Pod terminated'}`);
+
+            // Poll rapidly to visualize self-healing
+            setTimeout(() => this.renderK8sCluster(), 600);
+            setTimeout(() => this.renderK8sCluster(), 1800);
+            setTimeout(() => {
+                this.renderK8sCluster();
+                this.showToast(`🎉 Kubernetes Self-Healing Complete: healthy replacement pod spawned!`);
+            }, 3200);
+
+        } catch (err) {
+            this.showToast(`Error terminating pod: ${err.message}`);
+        }
+    }
+
+    async viewK8sLogs(podName) {
+        try {
+            const res = await fetch(`/api/k8s/logs?pod=${encodeURIComponent(podName)}`);
+            const data = await res.json();
+            const consoleEl = document.getElementById("k8sCliConsole");
+            if (consoleEl) {
+                consoleEl.textContent = `$ kubectl logs ${podName} -n pad --tail=60
+` + (data.logs || "No logs available.");
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+        } catch (err) {
+            this.showToast(`Error viewing logs: ${err.message}`);
+        }
+    }
+
+    async k8sExecCli(cmd) {
+        const consoleEl = document.getElementById("k8sCliConsole");
+        if (!consoleEl) return;
+
+        try {
+            const res = await fetch("/api/k8s/status");
+            const data = await res.json();
+
+            let output = "";
+            if (cmd === "get pods") {
+                output = `$ kubectl get pods -n pad -o wide\n`;
+                output += `NAME                                    READY   STATUS    RESTARTS   AGE    IP            NODE\n`;
+                (data.pods || []).forEach(p => {
+                    const readyStr = p.ready ? "1/1" : "0/1";
+                    const line = `${p.name.padEnd(39)} ${readyStr.padEnd(7)} ${p.phase.padEnd(9)} ${(p.restarts + "").padEnd(10)} ${(p.age || "2h").padEnd(6)} ${(p.ip || "10.244.0.1").padEnd(13)} minikube\n`;
+                    output += line;
+                });
+            } else if (cmd === "get deployments") {
+                output = `$ kubectl get deployments -n pad\n`;
+                output += `NAME                    READY   UP-TO-DATE   AVAILABLE   AGE\n`;
+                (data.deployments || []).forEach(d => {
+                    const readyStr = `${d.ready}/${d.desired}`;
+                    const line = `${d.name.padEnd(23)} ${readyStr.padEnd(7)} ${(d.desired + "").padEnd(12)} ${(d.ready + "").padEnd(11)} 2h\n`;
+                    output += line;
+                });
+            } else if (cmd === "get svc") {
+                output = `$ kubectl get services -n pad\n`;
+                output += `NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)         AGE\n`;
+                (data.services || []).forEach(s => {
+                    const line = `${s.name.padEnd(20)} ${s.type.padEnd(11)} ${(s.cluster_ip || "10.96.0.1").padEnd(16)} <none>        ${(s.ports || "80/TCP").padEnd(15)} 2h\n`;
+                    output += line;
+                });
+            }
+
+            consoleEl.textContent = output.replace(/\\n/g, "\n");
+            consoleEl.scrollTop = 0;
+        } catch (err) {
+            consoleEl.textContent = `$ kubectl ${cmd} -n pad\nError: ${err.message}`;
+        }
     }
 }
 

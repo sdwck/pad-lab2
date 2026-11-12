@@ -31,5 +31,27 @@
     "status": "SUCCESS",
     "error_reason": null,
     "created_at": 1793343995.8818276
+  },
+  "tx_1793348178843": {
+    "id": "tx_1793348178843",
+    "order_id": "ord_1793348178685",
+    "user_id": "user_admin",
+    "amount": 3499.0,
+    "card_masked": "**** **** **** 1234",
+    "card_holder": "ALEX MERCER",
+    "status": "SUCCESS",
+    "error_reason": null,
+    "created_at": 1793348178.8430634
+  },
+  "tx_1793351751738": {
+    "id": "tx_1793351751738",
+    "order_id": "ord_1793351751650",
+    "user_id": "user_admin",
+    "amount": 6998.0,
+    "card_masked": "**** **** **** 1234",
+    "card_holder": "ALEX MERCER",
+    "status": "SUCCESS",
+    "error_reason": null,
+    "created_at": 1793351751.7389398
   }
 }

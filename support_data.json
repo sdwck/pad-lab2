@@ -43,5 +43,24 @@
     ],
     "created_at": 1793342373.8895638,
     "updated_at": 1793342373.8895638
+  },
+  "tkt_1793348195505": {
+    "id": "tkt_1793348195505",
+    "user_id": "user_admin",
+    "user_name": "Alex Mercer",
+    "subject": "qwe",
+    "priority": "urgent",
+    "status": "OPEN",
+    "messages": [
+      {
+        "id": "msg_1793348195505",
+        "sender_name": "Alex Mercer",
+        "is_staff": false,
+        "text": "123",
+        "timestamp": 1793348195.50593
+      }
+    ],
+    "created_at": 1793348195.50593,
+    "updated_at": 1793348195.50593
   }
 }

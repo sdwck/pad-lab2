@@ -88,5 +88,59 @@
     "type": "payment",
     "is_read": false,
     "created_at": 1793343995.907385
+  },
+  "notif_1793348178719": {
+    "id": "notif_1793348178719",
+    "user_id": "user_admin",
+    "title": "Order Placed",
+    "message": "Your order #ord_1793348178685 has been placed. Please complete payment.",
+    "type": "order",
+    "is_read": false,
+    "created_at": 1793348178.7196832
+  },
+  "notif_1793348178876": {
+    "id": "notif_1793348178876",
+    "user_id": "user_admin",
+    "title": "Order #ord_1793348178685 Updated",
+    "message": "Status changed to: PAID",
+    "type": "order",
+    "is_read": false,
+    "created_at": 1793348178.8767216
+  },
+  "notif_1793348178881": {
+    "id": "notif_1793348178881",
+    "user_id": "user_admin",
+    "title": "Payment Confirmed",
+    "message": "Payment of $3499.0 for Order #ord_1793348178685 was successful. Tx: tx_1793348178843",
+    "type": "payment",
+    "is_read": false,
+    "created_at": 1793348178.881051
+  },
+  "notif_1793351751662": {
+    "id": "notif_1793351751662",
+    "user_id": "user_admin",
+    "title": "Order Placed",
+    "message": "Your order #ord_1793351751650 has been placed. Please complete payment.",
+    "type": "order",
+    "is_read": false,
+    "created_at": 1793351751.6629963
+  },
+  "notif_1793351751758": {
+    "id": "notif_1793351751758",
+    "user_id": "user_admin",
+    "title": "Order #ord_1793351751650 Updated",
+    "message": "Status changed to: PAID",
+    "type": "order",
+    "is_read": false,
+    "created_at": 1793351751.7589633
+  },
+  "notif_1793351751767": {
+    "id": "notif_1793351751767",
+    "user_id": "user_admin",
+    "title": "Payment Confirmed",
+    "message": "Payment of $6998.0 for Order #ord_1793351751650 was successful. Tx: tx_1793351751738",
+    "type": "payment",
+    "is_read": false,
+    "created_at": 1793351751.7670574
   }
 }

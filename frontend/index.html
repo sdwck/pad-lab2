@@ -1091,9 +1091,18 @@
         }
 
         @keyframes nodePulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.015); box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.015);
+                box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .node-box {
@@ -1839,7 +1848,8 @@
                     </svg>
                 </div>
                 <span class="brand-title">CloudMart</span>
-                <span class="mono" style="font-size: 0.65rem; color: #71717a; background: #121216; padding: 1px 5px; border-radius: 3px; border: 1px solid #27272a;">v2.0.0</span>
+                <span class="mono"
+                    style="font-size: 0.65rem; color: #71717a; background: #121216; padding: 1px 5px; border-radius: 3px; border: 1px solid #27272a;">v2.0.0</span>
             </div>
 
             <!-- Segmented Tabs -->
@@ -1854,6 +1864,10 @@
                 <button class="tab-link" data-tab="audit">Audit</button>
                 <button class="tab-link" data-tab="topology">Architecture</button>
                 <button class="tab-link" data-tab="traffic">Live Traffic</button>
+                <button class="tab-link" data-tab="k8s" style="border-left: 1px solid var(--border); margin-left: 4px; padding-left: 14px;">
+                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#38bdf8;margin-right:6px;box-shadow:0 0 6px #38bdf8;"></span>
+                    K8s Cluster
+                </button>
             </nav>
 
             <!-- Telemetry & Auth -->
@@ -1864,7 +1878,8 @@
                     <span class="mono text-cyan" id="telemetryLatency">0.4ms</span>
                 </div>
 
-                <button class="notif-btn" id="notifBellBtn" title="Dispatched Emails & Notifications (notification-service :8009)">
+                <button class="notif-btn" id="notifBellBtn"
+                    title="Dispatched Emails & Notifications (notification-service :8009)">
                     <span>✉️</span>
                     <span>Emails</span>
                     <span class="notif-badge-pill" id="notifBadge">0</span>
@@ -1918,7 +1933,8 @@
                 <div class="section-card-head" style="justify-content: space-between;">
                     <div>
                         <span class="section-heading" id="recHeading">Recommended Hardware</span>
-                        <div id="recContextSubtitle" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                        <div id="recContextSubtitle"
+                            style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
                             Affinity Engine Pairing
                         </div>
                     </div>
@@ -1940,10 +1956,12 @@
                     <div id="cartItemsContainer" class="cart-items-wrapper"></div>
 
                     <!-- Frequently Bought Together with Cart Items -->
-                    <div id="cartRecommendationsSection" style="margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;">
+                    <div id="cartRecommendationsSection"
+                        style="margin-top: 28px; border-top: 1px solid var(--border); padding-top: 16px;">
                         <div class="col-head" style="margin-bottom: 10px;">
                             <div>
-                                <span style="font-size: 0.88rem; font-weight: 600;">Frequently Paired with your Cart</span>
+                                <span style="font-size: 0.88rem; font-weight: 600;">Frequently Paired with your
+                                    Cart</span>
                                 <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 2px;">
                                     Hardware Bundle Engine &bull; recommendation-service :8008
                                 </div>
@@ -2127,10 +2145,14 @@
 
             <!-- Dynamic Live Probe Summary Strip -->
             <div id="meshProbeSummary" class="probe-summary-strip" style="display: none;">
-                <div class="pss-metric"><span class="pss-label">Cluster Status:</span> <span class="pss-val text-green" id="pssClusterStatus">12 / 12 UP</span></div>
-                <div class="pss-metric"><span class="pss-label">Avg Latency:</span> <span class="pss-val mono text-cyan" id="pssAvgLatency">--</span></div>
-                <div class="pss-metric"><span class="pss-label">Min / Max:</span> <span class="pss-val mono" id="pssMinMaxLatency">--</span></div>
-                <div class="pss-metric"><span class="pss-label">Ingress Route:</span> <span class="pss-val mono">Gateway :80 &rarr; Microservices</span></div>
+                <div class="pss-metric"><span class="pss-label">Cluster Status:</span> <span class="pss-val text-green"
+                        id="pssClusterStatus">12 / 12 UP</span></div>
+                <div class="pss-metric"><span class="pss-label">Avg Latency:</span> <span class="pss-val mono text-cyan"
+                        id="pssAvgLatency">--</span></div>
+                <div class="pss-metric"><span class="pss-label">Min / Max:</span> <span class="pss-val mono"
+                        id="pssMinMaxLatency">--</span></div>
+                <div class="pss-metric"><span class="pss-label">Ingress Route:</span> <span class="pss-val mono">Gateway
+                        :80 &rarr; Microservices</span></div>
             </div>
 
             <!-- Visual Architecture Blueprint (SVG Schema) -->
@@ -2555,7 +2577,8 @@
             <!-- Tier 3: Inter-Service Communication Flow Table -->
             <div class="arch-cheatsheet-card">
                 <div class="acc-head">
-                    <span style="font-weight: 700; font-size: 0.85rem; color: #fff;">Inter-Service RPC Dependencies</span>
+                    <span style="font-weight: 700; font-size: 0.85rem; color: #fff;">Inter-Service RPC
+                        Dependencies</span>
                     <span class="mono" style="font-size: 0.7rem; color: #34d399;">Synchronous REST via httpx</span>
                 </div>
                 <div class="flows-grid">
@@ -2564,9 +2587,11 @@
                     <div class="flow-pill"><span class="mono text-cyan">recommendations :8008</span> &rarr; <span
                             class="mono">catalog :8002</span> <span class="flow-why">tag metadata</span></div>
                     <div class="flow-pill"><span class="mono text-green">order :8005</span> &rarr; <span
-                            class="mono">catalog :8002</span> <span class="flow-why">price & stock verification</span></div>
+                            class="mono">catalog :8002</span> <span class="flow-why">price & stock verification</span>
+                    </div>
                     <div class="flow-pill"><span class="mono text-green">order :8005</span> &rarr; <span
-                            class="mono">notification :8009</span> <span class="flow-why">order notification</span></div>
+                            class="mono">notification :8009</span> <span class="flow-why">order notification</span>
+                    </div>
                     <div class="flow-pill"><span class="mono text-green">order :8005</span> &rarr; <span
                             class="mono">audit :8012</span> <span class="flow-why">audit log entry</span></div>
                     <div class="flow-pill"><span class="mono text-green">payment :8006</span> &rarr; <span
@@ -2576,7 +2601,8 @@
                     <div class="flow-pill"><span class="mono text-green">payment :8006</span> &rarr; <span
                             class="mono">audit :8012</span> <span class="flow-why">transaction ledger</span></div>
                     <div class="flow-pill"><span class="mono text-cyan">analytics :8010</span> &rarr; <span
-                            class="mono">order + catalog</span> <span class="flow-why">GMV & AOV aggregation</span></div>
+                            class="mono">order + catalog</span> <span class="flow-why">GMV & AOV aggregation</span>
+                    </div>
                 </div>
             </div>
 
@@ -2640,6 +2666,99 @@
             <!-- Traffic Logs Stream Table -->
             <div class="traffic-feed-container">
                 <div id="trafficLogsList" class="traffic-list"></div>
+            </div>
+        </section>
+
+        <!-- 9. KUBERNETES ORCHESTRATION & CLUSTER MANAGEMENT TAB -->
+        <section id="tab-k8s" class="tab-page">
+            <div class="col-head" style="margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="#38bdf8" stroke-width="2"/>
+                            <polygon points="12,5 18,8.5 18,15.5 12,19 6,15.5 6,8.5" stroke="#38bdf8" stroke-width="1.5" fill="#0369a1" fill-opacity="0.3"/>
+                            <circle cx="12" cy="12" r="2.5" fill="#38bdf8"/>
+                        </svg>
+                        <h3 style="font-size: 1.15rem; font-weight: 700; margin: 0; color: #f8fafc;">Kubernetes Cluster Control Plane</h3>
+                    </div>
+                    <span class="status-live-chip" id="k8sConnStatus" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
+                        ● Cluster Connected (Namespace: pad)
+                    </span>
+                    <span class="mono" style="font-size: 0.72rem; color: #94a3b8; background: #0f172a; padding: 4px 8px; border-radius: 4px; border: 1px solid #1e293b;">
+                        CoreDNS &bull; PVC Bound (1Gi) &bull; NodePort :30080
+                    </span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-secondary btn-sm" id="k8sRefreshBtn" style="display: flex; align-items: center; gap: 6px;">
+                        <span id="k8sRefreshIcon">&#x21bb;</span> Refresh Status
+                    </button>
+                    <button class="btn btn-primary btn-sm" id="k8sQuickScaleBtn">
+                        ⚡ Scale Demo (3 Replicas)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cluster Overview Metrics Strip -->
+            <div class="metrics-row" style="margin-bottom: 20px;">
+                <div class="metric-box">
+                    <span class="metric-lbl">Total Pods in Namespace</span>
+                    <div class="metric-val" id="k8sTotalPods" style="color: #38bdf8;">14</div>
+                    <span class="metric-sub" id="k8sPodsHealthySub">14 / 14 Running (100% Available)</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-lbl">Deployments</span>
+                    <div class="metric-val" id="k8sTotalDeployments" style="color: #10b981;">14</div>
+                    <span class="metric-sub">12 Services + Redis + Gateway</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-lbl">Kubernetes Services</span>
+                    <div class="metric-val" style="color: #a855f7;">14</div>
+                    <span class="metric-sub">13 ClusterIP + 1 NodePort (:30080)</span>
+                </div>
+                <div class="metric-box">
+                    <span class="metric-lbl">Persistent Volume (PVC)</span>
+                    <div class="metric-val" style="color: #f59e0b;">Bound</div>
+                    <span class="metric-sub">pad-data-pvc &bull; ReadWriteOnce</span>
+                </div>
+            </div>
+
+            <!-- Deployments and Pods Management Grid -->
+            <div class="panel" style="background: #09090b; border: 1px solid #1e1e24; border-radius: 8px; padding: 18px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #18181b; padding-bottom: 10px;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: #f1f5f9;">Active Kubernetes Deployments &amp; Replicas</h4>
+                        <p style="margin: 3px 0 0; font-size: 0.75rem; color: #71717a;">
+                            Live probe of container health checks, resource allocations, and pod instance health. Click <strong>Kill Pod</strong> to demonstrate Kubernetes self-healing.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.2);">Req: 50m CPU / 64Mi RAM</span>
+                        <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(244, 63, 94, 0.1); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.2);">Lim: 300m CPU / 256Mi RAM</span>
+                    </div>
+                </div>
+
+                <!-- Grid of Deployments -->
+                <div id="k8sDeploymentsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 14px;">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Interactive Kubernetes Defense CLI Console -->
+            <div class="panel" style="background: #050508; border: 1px solid #1e1e24; border-radius: 8px; padding: 18px; margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981;"></span>
+                        <span class="mono" style="font-size: 0.8rem; color: #94a3b8; margin-left: 8px;">kubectl Terminal &amp; Cluster Telemetry</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn btn-secondary btn-sm mono" style="font-size: 0.7rem;" id="k8sCliPodsBtn">kubectl get pods</button>
+                        <button class="btn btn-secondary btn-sm mono" style="font-size: 0.7rem;" id="k8sCliDeployBtn">kubectl get deployments</button>
+                        <button class="btn btn-secondary btn-sm mono" style="font-size: 0.7rem;" id="k8sCliSvcBtn">kubectl get svc</button>
+                    </div>
+                </div>
+                <pre id="k8sCliConsole" class="mono" style="margin: 0; padding: 14px; background: #000; border: 1px solid #18181b; border-radius: 6px; color: #a3e635; font-size: 0.76rem; line-height: 1.5; min-height: 160px; max-height: 260px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"></pre>
             </div>
         </section>
     </main>
@@ -2741,19 +2860,24 @@
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <h4 style="font-size: 1rem; font-weight: 600;">Dispatched Emails & Receipts</h4>
-                    <span class="mono" style="font-size: 0.68rem; color: #34d399; background: #064e3b; padding: 2px 6px; border-radius: 3px;">notification-service :8009</span>
+                    <span class="mono"
+                        style="font-size: 0.68rem; color: #34d399; background: #064e3b; padding: 2px 6px; border-radius: 3px;">notification-service
+                        :8009</span>
                 </div>
                 <button class="close-x" id="closeNotifModal">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 12px; background: #0c0d12; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border);">
-                    Transactional notification ledger emitted by <code>order-service</code> and <code>payment-service</code> via async REST events.
+                <div
+                    style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 12px; background: #0c0d12; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border);">
+                    Transactional notification ledger emitted by <code>order-service</code> and
+                    <code>payment-service</code> via async REST events.
                 </div>
                 <div id="notificationsList" style="display: flex; flex-direction: column; gap: 8px;">
                     <!-- Populated dynamically -->
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-surface);">
+            <div
+                style="display: flex; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--bg-surface);">
                 <button class="btn btn-secondary btn-sm" id="refreshNotifBtn">Refresh Inbox</button>
                 <button class="btn btn-secondary btn-sm" id="closeNotifModalBtn2">Close</button>
             </div>
