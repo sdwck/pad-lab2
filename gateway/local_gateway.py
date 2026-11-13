@@ -1,15 +1,15 @@
-import os
-import sys
-import time
 import json
-import subprocess
+import os
 import shutil
-from typing import List, Dict, Optional
-from fastapi import FastAPI, Request, Response, Body, Query
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, JSONResponse
+import subprocess
+import time
+from typing import Dict, List, Optional
+
 import httpx
+from fastapi import Body, FastAPI, Query, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="CloudMart Cloud-Native API Gateway & K8s Cluster Manager", version="3.0.0")
 
@@ -38,7 +38,11 @@ SERVICES_CONFIG = {
 }
 
 # Determine primary routing target based on environment
-IS_K8S_OR_DOCKER = os.path.exists("/.dockerenv") or os.getenv("KUBERNETES_SERVICE_HOST") is not None or os.getenv("ENVIRONMENT") == "kubernetes"
+IS_K8S_OR_DOCKER = (
+    os.path.exists("/.dockerenv")
+    or os.getenv("KUBERNETES_SERVICE_HOST") is not None
+    or os.getenv("ENVIRONMENT") == "kubernetes"
+)
 
 SERVICE_ROUTES = {}
 for svc, cfg in SERVICES_CONFIG.items():
@@ -68,7 +72,7 @@ DEMO_CLUSTER_STATE = {
         "support-service": 1,
         "audit-service": 1,
         "redis-service": 1,
-        "pad-gateway": 2
+        "pad-gateway": 2,
     },
     "killed_pods": {},
     "pod_hashes": {
@@ -85,11 +89,12 @@ DEMO_CLUSTER_STATE = {
         "support-service": ["7d65c4f3-l0z33"],
         "audit-service": ["6e54d3e2-m9a44"],
         "redis-service": ["5f43e2d1-n8b55"],
-        "pad-gateway": ["4a32f1c0-p7c66", "4a32f1c0-q6d77"]
-    }
+        "pad-gateway": ["4a32f1c0-p7c66", "4a32f1c0-q6d77"],
+    },
 }
 
 # --- KUBERNETES TELEMETRY & MANAGEMENT APIS ---
+
 
 def run_kubectl(cmd_args: List[str]) -> Optional[str]:
     """Execute kubectl command if binary is found and cluster is reachable."""
@@ -97,17 +102,13 @@ def run_kubectl(cmd_args: List[str]) -> Optional[str]:
     if not os.path.exists(kubectl_bin) and not shutil.which("kubectl"):
         return None
     try:
-        res = subprocess.run(
-            [kubectl_bin] + cmd_args,
-            capture_output=True,
-            text=True,
-            timeout=4
-        )
+        res = subprocess.run([kubectl_bin] + cmd_args, capture_output=True, text=True, timeout=4)
         if res.returncode == 0:
             return res.stdout.strip()
     except Exception:
         pass
     return None
+
 
 @app.get("/api/k8s/status")
 async def get_k8s_status():
@@ -137,29 +138,33 @@ async def get_k8s_status():
                 labels = p["metadata"].get("labels", {})
                 app_name = labels.get("app", p_name.rsplit("-", 2)[0])
 
-                parsed_pods.append({
-                    "name": p_name,
-                    "app": app_name,
-                    "phase": status_phase,
-                    "ready": ready,
-                    "restarts": restarts,
-                    "ip": pod_ip,
-                    "age": start_time,
-                    "cpu_request": "50m",
-                    "mem_request": "64Mi"
-                })
+                parsed_pods.append(
+                    {
+                        "name": p_name,
+                        "app": app_name,
+                        "phase": status_phase,
+                        "ready": ready,
+                        "restarts": restarts,
+                        "ip": pod_ip,
+                        "age": start_time,
+                        "cpu_request": "50m",
+                        "mem_request": "64Mi",
+                    }
+                )
 
             parsed_deployments = []
             for d in deployments_data:
                 d_name = d["metadata"]["name"]
                 replicas = d["spec"].get("replicas", 1)
                 ready_replicas = d["status"].get("readyReplicas", 0)
-                parsed_deployments.append({
-                    "name": d_name,
-                    "desired": replicas,
-                    "ready": ready_replicas,
-                    "status": "Healthy" if ready_replicas == replicas else "Progressing"
-                })
+                parsed_deployments.append(
+                    {
+                        "name": d_name,
+                        "desired": replicas,
+                        "ready": ready_replicas,
+                        "status": "Healthy" if ready_replicas == replicas else "Progressing",
+                    }
+                )
 
             parsed_services = []
             for s in services_data:
@@ -167,12 +172,9 @@ async def get_k8s_status():
                 s_type = s["spec"].get("type", "ClusterIP")
                 cluster_ip = s["spec"].get("clusterIP", "")
                 ports = [f"{p['port']}:{p.get('nodePort', p['port'])}" for p in s["spec"].get("ports", [])]
-                parsed_services.append({
-                    "name": s_name,
-                    "type": s_type,
-                    "cluster_ip": cluster_ip,
-                    "ports": ", ".join(ports)
-                })
+                parsed_services.append(
+                    {"name": s_name, "type": s_type, "cluster_ip": cluster_ip, "ports": ", ".join(ports)}
+                )
 
             return {
                 "source": "kubectl_live",
@@ -181,7 +183,7 @@ async def get_k8s_status():
                 "deployments": parsed_deployments,
                 "pods": parsed_pods,
                 "services": parsed_services,
-                "pvc": {"name": "pad-data-pvc", "status": "Bound", "capacity": "1Gi"}
+                "pvc": {"name": "pad-data-pvc", "status": "Bound", "capacity": "1Gi"},
             }
         except Exception:
             pass
@@ -214,19 +216,23 @@ async def get_k8s_status():
         desired_reps = DEMO_CLUSTER_STATE["replicas"].get(deployment_name, 1)
         ready_reps = desired_reps if is_healthy else 0
 
-        deployments.append({
-            "name": deployment_name,
-            "desired": desired_reps,
-            "ready": ready_reps,
-            "status": "Healthy" if is_healthy else "Degraded"
-        })
+        deployments.append(
+            {
+                "name": deployment_name,
+                "desired": desired_reps,
+                "ready": ready_reps,
+                "status": "Healthy" if is_healthy else "Degraded",
+            }
+        )
 
-        services_list.append({
-            "name": f"{deployment_name}",
-            "type": "ClusterIP",
-            "cluster_ip": f"10.96.{cfg['port'] % 250}.{cfg['port'] % 100 + 10}",
-            "ports": f"{cfg['port']}/TCP"
-        })
+        services_list.append(
+            {
+                "name": f"{deployment_name}",
+                "type": "ClusterIP",
+                "cluster_ip": f"10.96.{cfg['port'] % 250}.{cfg['port'] % 100 + 10}",
+                "ports": f"{cfg['port']}/TCP",
+            }
+        )
 
         # Generate active pod list
         hashes = DEMO_CLUSTER_STATE["pod_hashes"].setdefault(deployment_name, [])
@@ -242,86 +248,85 @@ async def get_k8s_status():
                 killed_at = DEMO_CLUSTER_STATE["killed_pods"][pod_name]
                 if now - killed_at < 3.0:
                     # Pod is self-healing / recovering
-                    pods.append({
-                        "name": pod_name,
-                        "app": deployment_name,
-                        "phase": "Terminating",
-                        "ready": False,
-                        "restarts": 1,
-                        "ip": f"10.244.1.{cfg['port'] % 100 + idx}",
-                        "age": "just now",
-                        "cpu_request": "50m",
-                        "mem_request": "64Mi"
-                    })
+                    pods.append(
+                        {
+                            "name": pod_name,
+                            "app": deployment_name,
+                            "phase": "Terminating",
+                            "ready": False,
+                            "restarts": 1,
+                            "ip": f"10.244.1.{cfg['port'] % 100 + idx}",
+                            "age": "just now",
+                            "cpu_request": "50m",
+                            "mem_request": "64Mi",
+                        }
+                    )
                     continue
                 else:
                     # Self-healing complete: generate replacement pod
-                    new_h = f"{hex(int(time.time()))[4:8]}-r{idx+1}"
+                    new_h = f"{hex(int(time.time()))[4:8]}-r{idx + 1}"
                     DEMO_CLUSTER_STATE["pod_hashes"][deployment_name][idx] = new_h
                     del DEMO_CLUSTER_STATE["killed_pods"][pod_name]
                     pod_name = f"{deployment_name}-{new_h}"
 
-            pods.append({
-                "name": pod_name,
-                "app": deployment_name,
-                "phase": "Running" if is_healthy else "Error",
-                "ready": is_healthy,
-                "restarts": 0,
-                "ip": f"10.244.1.{cfg['port'] % 100 + idx}",
-                "age": "2h",
-                "cpu_request": "50m",
-                "mem_request": "64Mi"
-            })
+            pods.append(
+                {
+                    "name": pod_name,
+                    "app": deployment_name,
+                    "phase": "Running" if is_healthy else "Error",
+                    "ready": is_healthy,
+                    "restarts": 0,
+                    "ip": f"10.244.1.{cfg['port'] % 100 + idx}",
+                    "age": "2h",
+                    "cpu_request": "50m",
+                    "mem_request": "64Mi",
+                }
+            )
 
     # Add Redis and Gateway
-    deployments.append({
-        "name": "redis-service",
-        "desired": 1,
-        "ready": 1,
-        "status": "Healthy"
-    })
-    pods.append({
-        "name": "redis-service-5f43e2d1-n8b55",
-        "app": "redis-service",
-        "phase": "Running",
-        "ready": True,
-        "restarts": 0,
-        "ip": "10.244.1.63",
-        "age": "2h",
-        "cpu_request": "50m",
-        "mem_request": "64Mi"
-    })
-    services_list.append({
-        "name": "redis-service",
-        "type": "ClusterIP",
-        "cluster_ip": "10.96.63.79",
-        "ports": "6379/TCP"
-    })
-
-    deployments.append({
-        "name": "pad-gateway",
-        "desired": DEMO_CLUSTER_STATE["replicas"].get("pad-gateway", 2),
-        "ready": DEMO_CLUSTER_STATE["replicas"].get("pad-gateway", 2),
-        "status": "Healthy"
-    })
-    for idx, h in enumerate(DEMO_CLUSTER_STATE["pod_hashes"].get("pad-gateway", ["4a32f1c0-p7c66", "4a32f1c0-q6d77"])):
-        pods.append({
-            "name": f"pad-gateway-{h}",
-            "app": "pad-gateway",
+    deployments.append({"name": "redis-service", "desired": 1, "ready": 1, "status": "Healthy"})
+    pods.append(
+        {
+            "name": "redis-service-5f43e2d1-n8b55",
+            "app": "redis-service",
             "phase": "Running",
             "ready": True,
             "restarts": 0,
-            "ip": f"10.244.0.{80 + idx}",
+            "ip": "10.244.1.63",
             "age": "2h",
             "cpu_request": "50m",
-            "mem_request": "64Mi"
-        })
-    services_list.append({
-        "name": "gateway-service",
-        "type": "NodePort",
-        "cluster_ip": "10.96.0.80",
-        "ports": "80:30080/TCP"
-    })
+            "mem_request": "64Mi",
+        }
+    )
+    services_list.append(
+        {"name": "redis-service", "type": "ClusterIP", "cluster_ip": "10.96.63.79", "ports": "6379/TCP"}
+    )
+
+    deployments.append(
+        {
+            "name": "pad-gateway",
+            "desired": DEMO_CLUSTER_STATE["replicas"].get("pad-gateway", 2),
+            "ready": DEMO_CLUSTER_STATE["replicas"].get("pad-gateway", 2),
+            "status": "Healthy",
+        }
+    )
+    for idx, h in enumerate(DEMO_CLUSTER_STATE["pod_hashes"].get("pad-gateway", ["4a32f1c0-p7c66", "4a32f1c0-q6d77"])):
+        pods.append(
+            {
+                "name": f"pad-gateway-{h}",
+                "app": "pad-gateway",
+                "phase": "Running",
+                "ready": True,
+                "restarts": 0,
+                "ip": f"10.244.0.{80 + idx}",
+                "age": "2h",
+                "cpu_request": "50m",
+                "mem_request": "64Mi",
+            }
+        )
+    services_list.append(
+        {"name": "gateway-service", "type": "NodePort", "cluster_ip": "10.96.0.80", "ports": "80:30080/TCP"}
+    )
 
     return {
         "source": "probes_telemetry",
@@ -330,8 +335,9 @@ async def get_k8s_status():
         "deployments": deployments,
         "pods": pods,
         "services": services_list,
-        "pvc": {"name": "pad-data-pvc", "status": "Bound", "capacity": "1Gi"}
+        "pvc": {"name": "pad-data-pvc", "status": "Bound", "capacity": "1Gi"},
     }
+
 
 @app.post("/api/k8s/scale")
 async def scale_deployment(payload: dict = Body(...)):
@@ -349,7 +355,7 @@ async def scale_deployment(payload: dict = Body(...)):
     # Adjust pod hashes
     current_hashes = DEMO_CLUSTER_STATE["pod_hashes"].setdefault(deployment, [])
     while len(current_hashes) < replicas:
-        current_hashes.append(f"{hex(int(time.time() * 1000))[2:6]}-s{len(current_hashes)+1}")
+        current_hashes.append(f"{hex(int(time.time() * 1000))[2:6]}-s{len(current_hashes) + 1}")
     while len(current_hashes) > replicas:
         current_hashes.pop()
 
@@ -358,8 +364,9 @@ async def scale_deployment(payload: dict = Body(...)):
         "source": "orchestrator",
         "deployment": deployment,
         "replicas": replicas,
-        "message": f"Deployment '{deployment}' scaled to {replicas} replicas."
+        "message": f"Deployment '{deployment}' scaled to {replicas} replicas.",
     }
+
 
 @app.post("/api/k8s/kill")
 async def kill_pod(payload: dict = Body(...)):
@@ -371,7 +378,11 @@ async def kill_pod(payload: dict = Body(...)):
     # Try live kubectl delete pod
     k_res = run_kubectl(["delete", "pod", pod_name, "-n", "pad", "--grace-period=1"])
     if k_res:
-        return {"status": "success", "source": "kubectl", "message": f"Pod {pod_name} deleted. Watch Kubernetes recreate it."}
+        return {
+            "status": "success",
+            "source": "kubectl",
+            "message": f"Pod {pod_name} deleted. Watch Kubernetes recreate it.",
+        }
 
     # Simulate pod kill and self-healing
     DEMO_CLUSTER_STATE["killed_pods"][pod_name] = time.time()
@@ -379,8 +390,9 @@ async def kill_pod(payload: dict = Body(...)):
         "status": "success",
         "source": "orchestrator",
         "pod": pod_name,
-        "message": f"Signal SIGTERM delivered to {pod_name}. Pod terminated. Self-healing controller is provisioning a healthy replacement."
+        "message": f"Signal SIGTERM delivered to {pod_name}. Pod terminated. Self-healing controller is provisioning a healthy replacement.",
     }
+
 
 @app.get("/api/k8s/logs")
 async def get_pod_logs(pod: str = Query(...)):
@@ -396,16 +408,19 @@ async def get_pod_logs(pod: str = Query(...)):
         f"{now_str} [INFO] [readinessProbe] Health check passed: status=ok, readiness=true",
         f"{now_str} [INFO] Worker process active. Listening on 0.0.0.0:800x",
         f"{now_str} [INFO] Inter-service RPC channel established via Kubernetes CoreDNS",
-        f"{now_str} [INFO] Kubernetes Service routing verified. Zero dropped frames."
+        f"{now_str} [INFO] Kubernetes Service routing verified. Zero dropped frames.",
     ]
     return {"pod": pod, "logs": "\n".join(logs)}
 
+
 # --- LIVE TRAFFIC TELEMETRY ---
+
 
 @app.get("/api/stream/traffic")
 @app.get("/stream/traffic")
 async def get_traffic(limit: int = 60):
     return TRAFFIC_LOGS[-limit:]
+
 
 @app.delete("/api/stream/traffic")
 @app.delete("/stream/traffic")
@@ -413,14 +428,18 @@ async def clear_traffic():
     TRAFFIC_LOGS.clear()
     return {"status": "cleared"}
 
+
 # --- OPENAPI SPEC PROXY ---
+
 
 @app.get("/docs", response_class=HTMLResponse)
 async def get_all_docs():
-    links_html = "".join([
-        f'<li style="margin-bottom:8px;"><a href="/docs/{s}" style="color:#3b82f6;text-decoration:none;font-family:JetBrains Mono, monospace;font-size:15px;">/docs/{s} &rarr; {s}-service</a></li>'
-        for s in SERVICES_CONFIG.keys()
-    ])
+    links_html = "".join(
+        [
+            f'<li style="margin-bottom:8px;"><a href="/docs/{s}" style="color:#3b82f6;text-decoration:none;font-family:JetBrains Mono, monospace;font-size:15px;">/docs/{s} &rarr; {s}-service</a></li>'
+            for s in SERVICES_CONFIG.keys()
+        ]
+    )
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -439,6 +458,7 @@ async def get_all_docs():
     <p style="margin-top: 32px;"><a href="/" style="color: #10b981; font-size: 14px; text-decoration: none;">&larr; Back to CloudMart App</a></p>
 </body>
 </html>"""
+
 
 @app.get("/docs/{service_name}", response_class=HTMLResponse)
 async def get_service_swagger(service_name: str):
@@ -468,7 +488,9 @@ async def get_service_swagger(service_name: str):
 </body>
 </html>"""
 
+
 # --- REVERSE PROXY DISPATCHER ---
+
 
 @app.api_route("/api/{service_name}/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"])
 async def reverse_proxy(service_name: str, path: str, request: Request):
@@ -501,12 +523,7 @@ async def reverse_proxy(service_name: str, path: str, request: Request):
     resp = None
     for url_to_try in tried_hosts:
         try:
-            resp = await client.request(
-                method=request.method,
-                url=url_to_try,
-                headers=req_headers,
-                content=body
-            )
+            resp = await client.request(method=request.method, url=url_to_try, headers=req_headers, content=body)
             target_url = url_to_try
             break
         except Exception:
@@ -530,28 +547,32 @@ async def reverse_proxy(service_name: str, path: str, request: Request):
     except Exception:
         body_snippet = ""
 
-    TRAFFIC_LOGS.append({
-        "id": f"req_{int(time.time() * 1000)}_{len(TRAFFIC_LOGS)}",
-        "timestamp": time.time(),
-        "time_str": time.strftime("%H:%M:%S") + f".{int((time.time() % 1) * 1000):03d}",
-        "method": request.method,
-        "path": f"/api/{service_name}/{path}" + (f"?{request.url.query}" if request.url.query else ""),
-        "service": service_name,
-        "target": target_url,
-        "status": status_code,
-        "latency_ms": latency_ms,
-        "cache": x_cache,
-        "body_preview": body_snippet,
-        "hop": f"Client -> Gateway :80 -> {service_name} ({target_host.replace('http://', '')}) -> {status_code}"
-    })
+    TRAFFIC_LOGS.append(
+        {
+            "id": f"req_{int(time.time() * 1000)}_{len(TRAFFIC_LOGS)}",
+            "timestamp": time.time(),
+            "time_str": time.strftime("%H:%M:%S") + f".{int((time.time() % 1) * 1000):03d}",
+            "method": request.method,
+            "path": f"/api/{service_name}/{path}" + (f"?{request.url.query}" if request.url.query else ""),
+            "service": service_name,
+            "target": target_url,
+            "status": status_code,
+            "latency_ms": latency_ms,
+            "cache": x_cache,
+            "body_preview": body_snippet,
+            "hop": f"Client -> Gateway :80 -> {service_name} ({target_host.replace('http://', '')}) -> {status_code}",
+        }
+    )
 
     if len(TRAFFIC_LOGS) > MAX_TRAFFIC_LOGS:
         TRAFFIC_LOGS.pop(0)
 
     return Response(content=res_bytes, status_code=status_code, headers=res_headers)
 
+
 # Serve Frontend static files with no-cache headers
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+
 
 @app.get("/style.css")
 async def get_css():
@@ -561,8 +582,9 @@ async def get_css():
     return Response(
         content=content,
         media_type="text/css",
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"}
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"},
     )
+
 
 @app.get("/app.js")
 async def get_js():
@@ -572,8 +594,9 @@ async def get_js():
     return Response(
         content=content,
         media_type="application/javascript",
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"}
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"},
     )
+
 
 if os.path.exists(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

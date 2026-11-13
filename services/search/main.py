@@ -2,13 +2,15 @@ import json
 import os
 import time
 from typing import List, Optional
+
 import httpx
-from fastapi import FastAPI, Depends, Query, Response
+from fastapi import Depends, FastAPI, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 CATALOG_URL = os.getenv("CATALOG_URL", "http://catalog-service:8002")
 REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379")
+
 
 # --- In-Memory Cache with TTL (Redis fallback) ---
 class CacheManager:
@@ -20,6 +22,7 @@ class CacheManager:
     def _init_redis(self):
         try:
             import redis
+
             self.redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True, socket_timeout=1)
             self.redis_client.ping()
         except Exception:
@@ -31,7 +34,7 @@ class CacheManager:
                 return self.redis_client.get(key)
             except Exception:
                 pass
-        
+
         entry = self._memory_cache.get(key)
         if entry:
             val, exp = entry
@@ -49,7 +52,9 @@ class CacheManager:
                 pass
         self._memory_cache[key] = (value, time.time() + ttl)
 
+
 cache = CacheManager()
+
 
 # --- Models ---
 class SearchResult(BaseModel):
@@ -63,6 +68,7 @@ class SearchResult(BaseModel):
     cached: bool
     latency_ms: float
     cache_backend: str
+
 
 # --- Repository: Queries Catalog Service ---
 class CatalogClientRepository:
@@ -80,6 +86,7 @@ class CatalogClientRepository:
         # Fallback in case catalog is unreachable during local test
         return []
 
+
 # --- Service: Search, Filter, Sort and Cache ---
 class SearchService:
     def __init__(self, repo: CatalogClientRepository):
@@ -92,7 +99,7 @@ class SearchService:
         min_price: Optional[float] = None,
         max_price: Optional[float] = None,
         tag: Optional[str] = None,
-        sort_by: Optional[str] = None
+        sort_by: Optional[str] = None,
     ) -> tuple[SearchResult, bool]:
         start = time.time()
         cache_key = f"search:{q}:{category}:{min_price}:{max_price}:{tag}:{sort_by}"
@@ -103,12 +110,7 @@ class SearchService:
         if cached_data:
             result_dict = json.loads(cached_data)
             elapsed = round((time.time() - start) * 1000, 2)
-            result = SearchResult(
-                **result_dict,
-                cached=True,
-                latency_ms=elapsed,
-                cache_backend=backend_name
-            )
+            result = SearchResult(**result_dict, cached=True, latency_ms=elapsed, cache_backend=backend_name)
             return result, True
 
         products = await self.repo.fetch_all_products()
@@ -157,19 +159,15 @@ class SearchService:
             "max_price": max_price,
             "sort_by": sort_by,
             "total_matches": len(filtered),
-            "items": filtered
+            "items": filtered,
         }
 
         # Cache for 20 seconds
         cache.set(cache_key, json.dumps(payload), ttl=20)
 
-        result = SearchResult(
-            **payload,
-            cached=False,
-            latency_ms=elapsed,
-            cache_backend=backend_name
-        )
+        result = SearchResult(**payload, cached=False, latency_ms=elapsed, cache_backend=backend_name)
         return result, False
+
 
 # --- FastAPI App & DI ---
 app = FastAPI(title="Search & Filtering Microservice (with Cache)", version="2.0.0")
@@ -182,11 +180,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> CatalogClientRepository:
     return CatalogClientRepository()
 
+
 def get_service(repo: CatalogClientRepository = Depends(get_repo)) -> SearchService:
     return SearchService(repo)
+
 
 @app.get("/health")
 def health():
@@ -194,8 +195,9 @@ def health():
         "status": "ok",
         "service": "search-service",
         "cache_backend": "Redis" if cache.redis_client else "In-Memory",
-        "version": "2.0.0"
+        "version": "2.0.0",
     }
+
 
 @app.get("/search", response_model=SearchResult)
 async def search_products(
@@ -206,7 +208,7 @@ async def search_products(
     max_price: Optional[float] = Query(None),
     tag: Optional[str] = Query(None),
     sort_by: Optional[str] = Query(None, description="'price_asc', 'price_desc', 'rating_desc'"),
-    service: SearchService = Depends(get_service)
+    service: SearchService = Depends(get_service),
 ):
     result, is_hit = await service.search(q, category, min_price, max_price, tag, sort_by)
     response.headers["X-Cache"] = "HIT" if is_hit else "MISS"

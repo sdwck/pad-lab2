@@ -33,3 +33,6 @@ Thumbs.db
 # Cloudflare tunnel temporary files
 cloudflared.exe
 *.tunnel.log
+.pytest_cache/
+.ruff_cache/
+uv.lock

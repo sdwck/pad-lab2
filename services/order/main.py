@@ -2,8 +2,9 @@ import json
 import os
 import time
 from typing import Dict, List, Optional
+
 import httpx
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -12,11 +13,13 @@ CATALOG_URL = os.getenv("CATALOG_URL", "http://catalog-service:8002")
 NOTIFICATION_URL = os.getenv("NOTIFICATION_URL", "http://notification-service:8009")
 AUDIT_URL = os.getenv("AUDIT_URL", "http://audit-service:8012")
 
+
 class OrderItem(BaseModel):
     product_id: str
     title: str
     price: float
     quantity: int
+
 
 class OrderCreate(BaseModel):
     user_id: str
@@ -25,8 +28,10 @@ class OrderCreate(BaseModel):
     customer_name: str
     customer_email: str
 
+
 class OrderStatusUpdate(BaseModel):
     status: str  # PENDING_PAYMENT, PAID, PROCESSING, SHIPPED, COMPLETED, CANCELLED
+
 
 class Order(BaseModel):
     id: str
@@ -39,6 +44,7 @@ class Order(BaseModel):
     status: str
     created_at: float = Field(default_factory=time.time)
     updated_at: float = Field(default_factory=time.time)
+
 
 # --- Repository Pattern ---
 class OrderRepository:
@@ -60,13 +66,13 @@ class OrderRepository:
                             "product_id": "prod_3",
                             "title": "Keychron Q1 Pro Wireless Custom Keyboard",
                             "price": 199.99,
-                            "quantity": 1
+                            "quantity": 1,
                         }
                     ],
                     "total_amount": 199.99,
                     "status": "PAID",
                     "created_at": time.time() - 86400,
-                    "updated_at": time.time() - 86400
+                    "updated_at": time.time() - 86400,
                 }
             }
             self._save(sample_order)
@@ -101,6 +107,7 @@ class OrderRepository:
         orders[order_data["id"]] = order_data
         self._save(orders)
 
+
 # --- Service Layer Pattern ---
 class OrderService:
     def __init__(self, repo: OrderRepository):
@@ -123,7 +130,7 @@ class OrderService:
             "total_amount": total,
             "status": "PENDING_PAYMENT",
             "created_at": time.time(),
-            "updated_at": time.time()
+            "updated_at": time.time(),
         }
 
         self.repo.save(order_record)
@@ -132,19 +139,25 @@ class OrderService:
         try:
             async with httpx.AsyncClient(timeout=1.5) as client:
                 # 1. Audit event
-                await client.post(f"{AUDIT_URL}/audit/log", json={
-                    "service": "order-service",
-                    "action": "ORDER_CREATED",
-                    "user_id": dto.user_id,
-                    "details": f"Order {order_id} created for {total} USD"
-                })
+                await client.post(
+                    f"{AUDIT_URL}/audit/log",
+                    json={
+                        "service": "order-service",
+                        "action": "ORDER_CREATED",
+                        "user_id": dto.user_id,
+                        "details": f"Order {order_id} created for {total} USD",
+                    },
+                )
                 # 2. Notification event
-                await client.post(f"{NOTIFICATION_URL}/notifications/send", json={
-                    "user_id": dto.user_id,
-                    "title": "Order Placed",
-                    "message": f"Your order #{order_id} has been placed. Please complete payment.",
-                    "type": "order"
-                })
+                await client.post(
+                    f"{NOTIFICATION_URL}/notifications/send",
+                    json={
+                        "user_id": dto.user_id,
+                        "title": "Order Placed",
+                        "message": f"Your order #{order_id} has been placed. Please complete payment.",
+                        "type": "order",
+                    },
+                )
         except Exception:
             pass
 
@@ -166,12 +179,15 @@ class OrderService:
         # Notify user of status change
         try:
             async with httpx.AsyncClient(timeout=1.5) as client:
-                await client.post(f"{NOTIFICATION_URL}/notifications/send", json={
-                    "user_id": raw["user_id"],
-                    "title": f"Order #{order_id} Updated",
-                    "message": f"Status changed to: {new_status}",
-                    "type": "order"
-                })
+                await client.post(
+                    f"{NOTIFICATION_URL}/notifications/send",
+                    json={
+                        "user_id": raw["user_id"],
+                        "title": f"Order #{order_id} Updated",
+                        "message": f"Status changed to: {new_status}",
+                        "type": "order",
+                    },
+                )
         except Exception:
             pass
 
@@ -189,6 +205,7 @@ class OrderService:
     def get_all_orders(self) -> List[Order]:
         return [Order(**o) for o in self.repo.get_all()]
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Order Management Microservice", version="2.0.0")
 
@@ -200,31 +217,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> OrderRepository:
     return OrderRepository()
 
+
 def get_service(repo: OrderRepository = Depends(get_repo)) -> OrderService:
     return OrderService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "order-service", "version": "2.0.0"}
 
+
 @app.post("/orders", response_model=Order)
 async def create_order(dto: OrderCreate, service: OrderService = Depends(get_service)):
     return await service.create_order(dto)
+
 
 @app.get("/orders/{order_id}", response_model=Order)
 def get_order(order_id: str, service: OrderService = Depends(get_service)):
     return service.get_order(order_id)
 
+
 @app.get("/orders/user/{user_id}", response_model=List[Order])
 def list_user_orders(user_id: str, service: OrderService = Depends(get_service)):
     return service.get_user_orders(user_id)
 
+
 @app.patch("/orders/{order_id}/status", response_model=Order)
 async def update_order_status(order_id: str, dto: OrderStatusUpdate, service: OrderService = Depends(get_service)):
     return await service.update_status(order_id, dto.status)
+
 
 @app.get("/orders", response_model=List[Order])
 def list_all_orders(service: OrderService = Depends(get_service)):

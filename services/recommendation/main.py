@@ -1,12 +1,13 @@
 import os
-import time
 from typing import List, Optional
+
 import httpx
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 CATALOG_URL = os.getenv("CATALOG_URL", "http://catalog-service:8002")
+
 
 class RecommendedProduct(BaseModel):
     id: str
@@ -17,6 +18,7 @@ class RecommendedProduct(BaseModel):
     image_url: str
     similarity_score: float
     reason: str
+
 
 # --- Repository Pattern (Remote Catalog Gateway) ---
 class CatalogClient:
@@ -43,6 +45,7 @@ class CatalogClient:
             pass
         return None
 
+
 AFFINITY_BUNDLES = {
     "Laptops": {
         "Peripherals": (0.85, "Essential Laptop Peripheral (Keyboard / Mouse)"),
@@ -66,8 +69,9 @@ AFFINITY_BUNDLES = {
         "Laptops": (0.80, "Compatible Laptop Pairing"),
         "Workstations": (0.75, "Compatible Workstation Pairing"),
         "Peripherals": (0.65, "Input Desk Complement"),
-    }
+    },
 }
+
 
 # --- Service Layer Pattern ---
 class RecommendationService:
@@ -120,16 +124,18 @@ class RecommendationService:
 
         recommendations = []
         for p, score, reason in scores[:limit]:
-            recommendations.append(RecommendedProduct(
-                id=p["id"],
-                title=p["title"],
-                category=p["category"],
-                price=p["price"],
-                rating=p.get("rating", 4.8),
-                image_url=p.get("image_url", ""),
-                similarity_score=score,
-                reason=reason
-            ))
+            recommendations.append(
+                RecommendedProduct(
+                    id=p["id"],
+                    title=p["title"],
+                    category=p["category"],
+                    price=p["price"],
+                    rating=p.get("rating", 4.8),
+                    image_url=p.get("image_url", ""),
+                    similarity_score=score,
+                    reason=reason,
+                )
+            )
 
         return recommendations
 
@@ -145,9 +151,11 @@ class RecommendationService:
                 rating=p.get("rating", 5.0),
                 image_url=p.get("image_url", ""),
                 similarity_score=1.0,
-                reason="Top Rated & Best Seller"
-            ) for p in sorted_prods[:limit]
+                reason="Top Rated & Best Seller",
+            )
+            for p in sorted_prods[:limit]
         ]
+
 
 # --- FastAPI App & DI ---
 app = FastAPI(title="Smart Recommendation Microservice", version="2.0.0")
@@ -160,19 +168,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_client() -> CatalogClient:
     return CatalogClient()
 
+
 def get_service(client: CatalogClient = Depends(get_client)) -> RecommendationService:
     return RecommendationService(client)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "recommendation-service", "version": "2.0.0"}
 
+
 @app.get("/recommendations/product/{product_id}", response_model=List[RecommendedProduct])
-async def get_product_recommendations(product_id: str, limit: int = 3, service: RecommendationService = Depends(get_service)):
+async def get_product_recommendations(
+    product_id: str, limit: int = 3, service: RecommendationService = Depends(get_service)
+):
     return await service.get_recommendations_for_product(product_id, limit)
+
 
 @app.get("/recommendations/trending", response_model=List[RecommendedProduct])
 async def get_trending(limit: int = 4, service: RecommendationService = Depends(get_service)):

@@ -1,12 +1,14 @@
 import json
 import os
 import time
-from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+from typing import Dict, List
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_FILE = os.getenv("DATA_FILE", "/data/reviews.json" if os.path.exists("/data") else "reviews_data.json")
+
 
 class ReviewCreate(BaseModel):
     product_id: str
@@ -14,6 +16,7 @@ class ReviewCreate(BaseModel):
     user_name: str
     rating: int = Field(ge=1, le=5)
     comment: str
+
 
 class Review(BaseModel):
     id: str
@@ -24,11 +27,13 @@ class Review(BaseModel):
     comment: str
     created_at: float = Field(default_factory=time.time)
 
+
 class RatingStats(BaseModel):
     product_id: str
     average_rating: float
     total_reviews: int
     distribution: Dict[int, int]
+
 
 # --- Repository Pattern ---
 class ReviewRepository:
@@ -46,7 +51,7 @@ class ReviewRepository:
                     "user_name": "Tima Diaconu",
                     "rating": 5,
                     "comment": "Insane build quality and battery life. Compiles huge Docker containers in seconds.",
-                    "created_at": time.time() - 40000
+                    "created_at": time.time() - 40000,
                 },
                 {
                     "id": "rev_2",
@@ -55,8 +60,8 @@ class ReviewRepository:
                     "user_name": "Tima Diaconu",
                     "rating": 5,
                     "comment": "The double gasket typing feel on the Keychron Q1 is next-level.",
-                    "created_at": time.time() - 20000
-                }
+                    "created_at": time.time() - 20000,
+                },
             ]
             self._save({r["id"]: r for r in sample_reviews})
 
@@ -81,6 +86,7 @@ class ReviewRepository:
         revs[review["id"]] = review
         self._save(revs)
 
+
 # --- Service Layer Pattern ---
 class ReviewService:
     def __init__(self, repo: ReviewRepository):
@@ -95,7 +101,7 @@ class ReviewService:
             "user_name": dto.user_name,
             "rating": dto.rating,
             "comment": dto.comment,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
         self.repo.save(record)
         return Review(**record)
@@ -107,10 +113,7 @@ class ReviewService:
         reviews = self.repo.get_by_product(product_id)
         if not reviews:
             return RatingStats(
-                product_id=product_id,
-                average_rating=5.0,
-                total_reviews=0,
-                distribution={1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+                product_id=product_id, average_rating=5.0, total_reviews=0, distribution={1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
             )
 
         dist = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
@@ -121,12 +124,8 @@ class ReviewService:
             total_score += rt
 
         avg = round(total_score / len(reviews), 2)
-        return RatingStats(
-            product_id=product_id,
-            average_rating=avg,
-            total_reviews=len(reviews),
-            distribution=dist
-        )
+        return RatingStats(product_id=product_id, average_rating=avg, total_reviews=len(reviews), distribution=dist)
+
 
 # --- FastAPI App & DI ---
 app = FastAPI(title="Product Reviews & Ratings Microservice", version="2.0.0")
@@ -139,23 +138,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> ReviewRepository:
     return ReviewRepository()
 
+
 def get_service(repo: ReviewRepository = Depends(get_repo)) -> ReviewService:
     return ReviewService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "review-service", "version": "2.0.0"}
 
+
 @app.post("/reviews", response_model=Review)
 def create_review(dto: ReviewCreate, service: ReviewService = Depends(get_service)):
     return service.add_review(dto)
 
+
 @app.get("/reviews/product/{product_id}", response_model=List[Review])
 def get_product_reviews(product_id: str, service: ReviewService = Depends(get_service)):
     return service.get_product_reviews(product_id)
+
 
 @app.get("/reviews/stats/{product_id}", response_model=RatingStats)
 def get_rating_stats(product_id: str, service: ReviewService = Depends(get_service)):

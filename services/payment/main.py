@@ -2,8 +2,9 @@ import json
 import os
 import time
 from typing import Dict, List, Optional
+
 import httpx
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -11,6 +12,7 @@ DATA_FILE = os.getenv("DATA_FILE", "/data/payments.json" if os.path.exists("/dat
 ORDER_URL = os.getenv("ORDER_URL", "http://order-service:8005")
 NOTIFICATION_URL = os.getenv("NOTIFICATION_URL", "http://notification-service:8009")
 AUDIT_URL = os.getenv("AUDIT_URL", "http://audit-service:8012")
+
 
 class PaymentRequest(BaseModel):
     order_id: str
@@ -22,6 +24,7 @@ class PaymentRequest(BaseModel):
     exp_year: str
     cvv: str
 
+
 class PaymentTransaction(BaseModel):
     id: str
     order_id: str
@@ -32,6 +35,7 @@ class PaymentTransaction(BaseModel):
     status: str  # SUCCESS, FAILED
     error_reason: Optional[str] = None
     created_at: float = Field(default_factory=time.time)
+
 
 # --- Repository Pattern ---
 class PaymentTransactionRepository:
@@ -73,6 +77,7 @@ class PaymentTransactionRepository:
         txs[tx["id"]] = tx
         self._save(txs)
 
+
 # --- Service Layer Pattern ---
 class PaymentService:
     def __init__(self, repo: PaymentTransactionRepository):
@@ -107,7 +112,7 @@ class PaymentService:
             "card_holder": dto.card_holder.upper(),
             "status": status,
             "error_reason": error_msg,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
 
         self.repo.save(tx_record)
@@ -117,18 +122,24 @@ class PaymentService:
             try:
                 async with httpx.AsyncClient(timeout=2.0) as client:
                     await client.patch(f"{ORDER_URL}/orders/{dto.order_id}/status", json={"status": "PAID"})
-                    await client.post(f"{NOTIFICATION_URL}/notifications/send", json={
-                        "user_id": dto.user_id,
-                        "title": "Payment Confirmed",
-                        "message": f"Payment of ${dto.amount} for Order #{dto.order_id} was successful. Tx: {tx_id}",
-                        "type": "payment"
-                    })
-                    await client.post(f"{AUDIT_URL}/audit/log", json={
-                        "service": "payment-service",
-                        "action": "PAYMENT_PROCESSED",
-                        "user_id": dto.user_id,
-                        "details": f"Tx {tx_id}: ${dto.amount} charged successfully on order {dto.order_id}"
-                    })
+                    await client.post(
+                        f"{NOTIFICATION_URL}/notifications/send",
+                        json={
+                            "user_id": dto.user_id,
+                            "title": "Payment Confirmed",
+                            "message": f"Payment of ${dto.amount} for Order #{dto.order_id} was successful. Tx: {tx_id}",
+                            "type": "payment",
+                        },
+                    )
+                    await client.post(
+                        f"{AUDIT_URL}/audit/log",
+                        json={
+                            "service": "payment-service",
+                            "action": "PAYMENT_PROCESSED",
+                            "user_id": dto.user_id,
+                            "details": f"Tx {tx_id}: ${dto.amount} charged successfully on order {dto.order_id}",
+                        },
+                    )
             except Exception:
                 pass
         else:
@@ -149,6 +160,7 @@ class PaymentService:
     def list_all(self) -> List[PaymentTransaction]:
         return [PaymentTransaction(**t) for t in self.repo.get_all()]
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Payment Gateway Microservice", version="2.0.0")
 
@@ -160,27 +172,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> PaymentTransactionRepository:
     return PaymentTransactionRepository()
 
+
 def get_service(repo: PaymentTransactionRepository = Depends(get_repo)) -> PaymentService:
     return PaymentService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "payment-service", "version": "2.0.0"}
 
+
 @app.post("/payments/process", response_model=PaymentTransaction)
 async def process_payment(dto: PaymentRequest, service: PaymentService = Depends(get_service)):
     return await service.process_payment(dto)
+
 
 @app.get("/payments/order/{order_id}", response_model=Optional[PaymentTransaction])
 def get_order_payment(order_id: str, service: PaymentService = Depends(get_service)):
     return service.get_by_order(order_id)
 
+
 @app.get("/payments/{tx_id}", response_model=PaymentTransaction)
 def get_transaction(tx_id: str, service: PaymentService = Depends(get_service)):
     return service.get_transaction(tx_id)
+
 
 @app.get("/payments", response_model=List[PaymentTransaction])
 def list_transactions(service: PaymentService = Depends(get_service)):

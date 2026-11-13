@@ -2,11 +2,13 @@ import json
 import os
 import time
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_FILE = os.getenv("DATA_FILE", "/data/catalog.json" if os.path.exists("/data") else "catalog_data.json")
+
 
 # --- Domain Models ---
 class Product(BaseModel):
@@ -22,6 +24,7 @@ class Product(BaseModel):
     tags: List[str] = []
     created_at: float = Field(default_factory=time.time)
 
+
 class ProductCreate(BaseModel):
     title: str
     category: str
@@ -31,8 +34,10 @@ class ProductCreate(BaseModel):
     image_url: str
     tags: List[str] = []
 
+
 class StockUpdate(BaseModel):
     quantity_delta: int  # e.g. -1 when bought, +10 when restocked
+
 
 # --- Repository Pattern ---
 class ProductRepository:
@@ -45,7 +50,7 @@ class ProductRepository:
             initial_products = [
                 {
                     "id": "prod_1",
-                    "title": "MacBook Pro 16\" M3 Max",
+                    "title": 'MacBook Pro 16" M3 Max',
                     "category": "Laptops",
                     "price": 3499.00,
                     "stock": 14,
@@ -54,7 +59,7 @@ class ProductRepository:
                     "description": "Apple M3 Max 16-core CPU, 40-core GPU, 48GB Unified RAM, 1TB NVMe.",
                     "image_url": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&auto=format&fit=crop&q=80",
                     "tags": ["apple", "m3", "laptop", "silicon"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_2",
@@ -67,7 +72,7 @@ class ProductRepository:
                     "description": "24GB GDDR6X, Ada Lovelace, 4th gen Tensor Cores for local LLM inference.",
                     "image_url": "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop&q=80",
                     "tags": ["gpu", "nvidia", "hardware", "ai"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_3",
@@ -80,11 +85,11 @@ class ProductRepository:
                     "description": "CNC aluminum chassis, double-gasket acoustic mount, hot-swappable switches.",
                     "image_url": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80",
                     "tags": ["keyboard", "mechanical", "custom"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_4",
-                    "title": "Dell UltraSharp 32\" 4K Hub (U3223QE)",
+                    "title": 'Dell UltraSharp 32" 4K Hub (U3223QE)',
                     "category": "Monitors",
                     "price": 849.50,
                     "stock": 11,
@@ -93,7 +98,7 @@ class ProductRepository:
                     "description": "IPS Black panel, 2000:1 contrast, 90W USB-C Power Delivery, RJ45 Ethernet.",
                     "image_url": "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=600&auto=format&fit=crop&q=80",
                     "tags": ["monitor", "4k", "ips", "usb-c"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_5",
@@ -106,7 +111,7 @@ class ProductRepository:
                     "description": "Dual processor ANC engine, 8 microphones, 30h battery life, LDAC Hi-Res.",
                     "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80",
                     "tags": ["audio", "anc", "wireless", "headphones"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_6",
@@ -119,7 +124,7 @@ class ProductRepository:
                     "description": "Broadcom BCM2712 Quad Arm Cortex-A76 @ 2.4GHz, dual 4Kp60, PCIe 2.0 slot.",
                     "image_url": "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=600&auto=format&fit=crop&q=80",
                     "tags": ["arm", "iot", "linux", "edge"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_7",
@@ -132,7 +137,7 @@ class ProductRepository:
                     "description": "24-core CPU, 60-core GPU, 64GB Unified RAM, 800GB/s bandwidth, 1TB SSD.",
                     "image_url": "https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=600&auto=format&fit=crop&q=80",
                     "tags": ["apple", "mac", "workstation", "silicon"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_8",
@@ -145,7 +150,7 @@ class ProductRepository:
                     "description": "PCIe 4.0 NVMe M.2 2280, up to 7450 MB/s sequential read, nickel heat spreader.",
                     "image_url": "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600&auto=format&fit=crop&q=80",
                     "tags": ["ssd", "nvme", "pcie", "storage"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_9",
@@ -158,7 +163,7 @@ class ProductRepository:
                     "description": "Enterprise 10G SFP+ Gateway, 3.5 Gbps IDS/IPS throughput, 8-port GbE switch.",
                     "image_url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=600&auto=format&fit=crop&q=80",
                     "tags": ["networking", "unifi", "enterprise", "router"],
-                    "created_at": time.time()
+                    "created_at": time.time(),
                 },
                 {
                     "id": "prod_10",
@@ -171,8 +176,8 @@ class ProductRepository:
                     "description": "8K DPI any-surface track sensor, Quiet Clicks, MagSpeed electromagnetic scroll.",
                     "image_url": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&auto=format&fit=crop&q=80",
                     "tags": ["mouse", "wireless", "logitech", "ergonomic"],
-                    "created_at": time.time()
-                }
+                    "created_at": time.time(),
+                },
             ]
             self._save({p["id"]: p for p in initial_products})
 
@@ -197,6 +202,7 @@ class ProductRepository:
         items = self._load()
         items[product["id"]] = product
         self._save(items)
+
 
 # --- Service Layer Pattern ---
 class CatalogService:
@@ -228,7 +234,7 @@ class CatalogService:
             "description": dto.description,
             "image_url": dto.image_url,
             "tags": dto.tags,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
         self.repo.save(new_prod)
         return Product(**new_prod)
@@ -248,6 +254,7 @@ class CatalogService:
         cats = sorted(list({i.get("category") for i in items if i.get("category")}))
         return cats
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Product Catalog Microservice", version="2.0.0")
 
@@ -259,31 +266,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> ProductRepository:
     return ProductRepository()
 
+
 def get_service(repo: ProductRepository = Depends(get_repo)) -> CatalogService:
     return CatalogService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "catalog-service", "version": "2.0.0"}
 
+
 @app.get("/products", response_model=List[Product])
 def list_products(category: Optional[str] = None, service: CatalogService = Depends(get_service)):
     return service.list_products(category)
+
 
 @app.get("/products/{product_id}", response_model=Product)
 def get_product(product_id: str, service: CatalogService = Depends(get_service)):
     return service.get_product(product_id)
 
+
 @app.post("/products", response_model=Product)
 def create_product(dto: ProductCreate, service: CatalogService = Depends(get_service)):
     return service.create_product(dto)
 
+
 @app.put("/products/{product_id}/stock", response_model=Product)
 def update_stock(product_id: str, dto: StockUpdate, service: CatalogService = Depends(get_service)):
     return service.update_stock(product_id, dto.quantity_delta)
+
 
 @app.get("/categories", response_model=List[str])
 def list_categories(service: CatalogService = Depends(get_service)):

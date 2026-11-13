@@ -1,0 +1,101 @@
+name: CI/CD Pipeline & Automated Verification
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Code Quality & Ruff Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Ruff
+        run: pip install ruff>=0.3.0
+
+      - name: Run Ruff Lint Checks
+        run: ruff check .
+
+      - name: Run Ruff Code Formatting Check
+        run: ruff format --check .
+
+  test:
+    name: Unit, Integration & E2E Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Platform Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Execute Full Test Suite
+        run: pytest -v tests/
+
+  k8s-validate:
+    name: Kubernetes Manifest Conformance
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML & Pytest
+        run: pip install pyyaml pytest
+
+      - name: Validate Kubernetes Specifications
+        run: pytest -v tests/test_k8s_manifests.py
+
+  docker-build:
+    name: Container Image Build Verification
+    runs-on: ubuntu-latest
+    needs: [test, k8s-validate]
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Microservices Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: pad-backend:latest
+
+      - name: Build API Gateway Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./gateway/Dockerfile
+          push: false
+          tags: pad-gateway:latest

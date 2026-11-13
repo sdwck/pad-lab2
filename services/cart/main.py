@@ -1,12 +1,14 @@
 import json
 import os
 import time
-from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+from typing import Dict, List
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_FILE = os.getenv("DATA_FILE", "/data/cart.json" if os.path.exists("/data") else "cart_data.json")
+
 
 class CartItem(BaseModel):
     product_id: str
@@ -15,12 +17,14 @@ class CartItem(BaseModel):
     quantity: int = Field(ge=1)
     image_url: str = ""
 
+
 class Cart(BaseModel):
     user_id: str
     items: List[CartItem] = []
     total_price: float = 0.0
     items_count: int = 0
     updated_at: float = Field(default_factory=time.time)
+
 
 class AddItemDto(BaseModel):
     product_id: str
@@ -29,8 +33,10 @@ class AddItemDto(BaseModel):
     quantity: int = 1
     image_url: str = ""
 
+
 class UpdateQuantityDto(BaseModel):
     quantity: int = Field(ge=1)
+
 
 # --- Repository Pattern ---
 class CartRepository:
@@ -56,11 +62,7 @@ class CartRepository:
     def get_cart(self, user_id: str) -> dict:
         data = self._load()
         if user_id not in data:
-            data[user_id] = {
-                "user_id": user_id,
-                "items": [],
-                "updated_at": time.time()
-            }
+            data[user_id] = {"user_id": user_id, "items": [], "updated_at": time.time()}
             self._save(data)
         return data[user_id]
 
@@ -73,12 +75,9 @@ class CartRepository:
     def clear_cart(self, user_id: str):
         data = self._load()
         if user_id in data:
-            data[user_id] = {
-                "user_id": user_id,
-                "items": [],
-                "updated_at": time.time()
-            }
+            data[user_id] = {"user_id": user_id, "items": [], "updated_at": time.time()}
             self._save(data)
+
 
 # --- Service Layer Pattern ---
 class CartService:
@@ -94,7 +93,7 @@ class CartService:
             items=items,
             total_price=total,
             items_count=count,
-            updated_at=raw.get("updated_at", time.time())
+            updated_at=raw.get("updated_at", time.time()),
         )
 
     def get_user_cart(self, user_id: str) -> Cart:
@@ -104,7 +103,7 @@ class CartService:
     def add_item(self, user_id: str, dto: AddItemDto) -> Cart:
         raw = self.repo.get_cart(user_id)
         items = raw.get("items", [])
-        
+
         fallback_img = "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=60"
         item_img = dto.image_url if dto.image_url and dto.image_url.strip() else fallback_img
 
@@ -116,16 +115,18 @@ class CartService:
                     item["image_url"] = item_img
                 found = True
                 break
-        
+
         if not found:
-            items.append({
-                "product_id": dto.product_id,
-                "title": dto.title,
-                "price": dto.price,
-                "quantity": dto.quantity,
-                "image_url": item_img
-            })
-        
+            items.append(
+                {
+                    "product_id": dto.product_id,
+                    "title": dto.title,
+                    "price": dto.price,
+                    "quantity": dto.quantity,
+                    "image_url": item_img,
+                }
+            )
+
         raw["items"] = items
         self.repo.save_cart(user_id, raw)
         return self._calculate(raw)
@@ -133,12 +134,12 @@ class CartService:
     def update_quantity(self, user_id: str, product_id: str, qty: int) -> Cart:
         raw = self.repo.get_cart(user_id)
         items = raw.get("items", [])
-        
+
         for item in items:
             if item["product_id"] == product_id:
                 item["quantity"] = qty
                 break
-        
+
         raw["items"] = items
         self.repo.save_cart(user_id, raw)
         return self._calculate(raw)
@@ -153,6 +154,7 @@ class CartService:
         self.repo.clear_cart(user_id)
         return Cart(user_id=user_id, items=[], total_price=0.0, items_count=0)
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Shopping Cart Microservice", version="2.0.0")
 
@@ -164,31 +166,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> CartRepository:
     return CartRepository()
 
+
 def get_service(repo: CartRepository = Depends(get_repo)) -> CartService:
     return CartService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "cart-service", "version": "2.0.0"}
 
+
 @app.get("/cart/{user_id}", response_model=Cart)
 def get_cart(user_id: str, service: CartService = Depends(get_service)):
     return service.get_user_cart(user_id)
+
 
 @app.post("/cart/{user_id}/items", response_model=Cart)
 def add_item(user_id: str, dto: AddItemDto, service: CartService = Depends(get_service)):
     return service.add_item(user_id, dto)
 
+
 @app.put("/cart/{user_id}/items/{product_id}", response_model=Cart)
-def update_item_quantity(user_id: str, product_id: str, dto: UpdateQuantityDto, service: CartService = Depends(get_service)):
+def update_item_quantity(
+    user_id: str, product_id: str, dto: UpdateQuantityDto, service: CartService = Depends(get_service)
+):
     return service.update_quantity(user_id, product_id, dto.quantity)
+
 
 @app.delete("/cart/{user_id}/items/{product_id}", response_model=Cart)
 def remove_item(user_id: str, product_id: str, service: CartService = Depends(get_service)):
     return service.remove_item(user_id, product_id)
+
 
 @app.delete("/cart/{user_id}", response_model=Cart)
 def clear_cart(user_id: str, service: CartService = Depends(get_service)):

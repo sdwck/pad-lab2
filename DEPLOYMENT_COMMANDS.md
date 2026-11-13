@@ -9,7 +9,22 @@ cd pad-lab2
 ## 2. Build Container Images
 Build local base images for backend microservices and API gateway:
 ```bash
+# Option A: Build via Docker Compose
 docker compose build
+
+# Option B: Direct Docker build for each image
+docker build -t pad-backend:latest -f Dockerfile .
+docker build -t pad-gateway:latest -f gateway/Dockerfile .
+```
+
+## 3. Run Automated Tests and Linting (CI/CD Quality Gate)
+```bash
+# Code Quality Linter
+ruff check .
+ruff format --check .
+
+# Full Unit, Integration, and End-to-End Test Suite (28 tests)
+pytest -v tests/
 ```
 
 ## 3. Deploy Stack to Kubernetes

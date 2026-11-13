@@ -1,19 +1,22 @@
 import os
 import time
 from typing import Dict, List
+
 import httpx
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 ORDER_URL = os.getenv("ORDER_URL", "http://order-service:8005")
 CATALOG_URL = os.getenv("CATALOG_URL", "http://catalog-service:8002")
 
+
 class TopProduct(BaseModel):
     product_id: str
     title: str
     units_sold: int
     revenue: float
+
 
 class DashboardMetrics(BaseModel):
     total_revenue: float
@@ -24,6 +27,7 @@ class DashboardMetrics(BaseModel):
     total_catalog_products: int
     top_products: List[TopProduct]
     computed_at: float
+
 
 # --- Repository / Gateway for Analytics ---
 class AggregatedDataRepository:
@@ -51,6 +55,7 @@ class AggregatedDataRepository:
             pass
         return []
 
+
 # --- Service Layer Pattern ---
 class AnalyticsService:
     def __init__(self, repo: AggregatedDataRepository):
@@ -73,12 +78,7 @@ class AnalyticsService:
                 qty = it.get("quantity", 1)
                 price = it.get("price", 0)
                 if pid not in sold_map:
-                    sold_map[pid] = {
-                        "product_id": pid,
-                        "title": it.get("title", pid),
-                        "units_sold": 0,
-                        "revenue": 0.0
-                    }
+                    sold_map[pid] = {"product_id": pid, "title": it.get("title", pid), "units_sold": 0, "revenue": 0.0}
                 sold_map[pid]["units_sold"] += qty
                 sold_map[pid]["revenue"] = round(sold_map[pid]["revenue"] + (price * qty), 2)
 
@@ -93,8 +93,9 @@ class AnalyticsService:
             pending_orders_count=len([o for o in orders if o.get("status") == "PENDING_PAYMENT"]),
             total_catalog_products=len(products),
             top_products=top_prods,
-            computed_at=time.time()
+            computed_at=time.time(),
         )
+
 
 # --- FastAPI App & DI ---
 app = FastAPI(title="Business Intelligence & Analytics Microservice", version="2.0.0")
@@ -107,15 +108,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> AggregatedDataRepository:
     return AggregatedDataRepository()
+
 
 def get_service(repo: AggregatedDataRepository = Depends(get_repo)) -> AnalyticsService:
     return AnalyticsService(repo)
 
+
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "analytics-service", "version": "2.0.0"}
+
 
 @app.get("/analytics/dashboard", response_model=DashboardMetrics)
 async def get_dashboard(service: AnalyticsService = Depends(get_service)):

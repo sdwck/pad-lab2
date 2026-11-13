@@ -2,11 +2,13 @@ import json
 import os
 import time
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_FILE = os.getenv("DATA_FILE", "/data/support.json" if os.path.exists("/data") else "support_data.json")
+
 
 class TicketMessage(BaseModel):
     id: str
@@ -15,6 +17,7 @@ class TicketMessage(BaseModel):
     text: str
     timestamp: float = Field(default_factory=time.time)
 
+
 class TicketCreate(BaseModel):
     user_id: str
     user_name: str
@@ -22,10 +25,12 @@ class TicketCreate(BaseModel):
     priority: str = "normal"  # low, normal, urgent
     initial_message: str
 
+
 class MessageCreate(BaseModel):
     sender_name: str
     is_staff: bool = False
     text: str
+
 
 class SupportTicket(BaseModel):
     id: str
@@ -37,6 +42,7 @@ class SupportTicket(BaseModel):
     messages: List[TicketMessage] = []
     created_at: float = Field(default_factory=time.time)
     updated_at: float = Field(default_factory=time.time)
+
 
 # --- Repository Pattern ---
 class SupportTicketRepository:
@@ -60,18 +66,18 @@ class SupportTicketRepository:
                             "sender_name": "Tima Diaconu",
                             "is_staff": False,
                             "text": "Hello, how fast is delivery for Raspberry Pi 5 within Rîșcani district?",
-                            "timestamp": time.time() - 36000
+                            "timestamp": time.time() - 36000,
                         },
                         {
                             "id": "msg_2",
                             "sender_name": "Support Agent Victor",
                             "is_staff": True,
                             "text": "Hi Tima! Orders confirmed before 14:00 arrive same-day via local courier.",
-                            "timestamp": time.time() - 30000
-                        }
+                            "timestamp": time.time() - 30000,
+                        },
                     ],
                     "created_at": time.time() - 36000,
-                    "updated_at": time.time() - 30000
+                    "updated_at": time.time() - 30000,
                 }
             }
             self._save(sample)
@@ -100,6 +106,7 @@ class SupportTicketRepository:
         tickets[record["id"]] = record
         self._save(tickets)
 
+
 # --- Service Layer Pattern ---
 class SupportService:
     def __init__(self, repo: SupportTicketRepository):
@@ -112,7 +119,7 @@ class SupportService:
             "sender_name": dto.user_name,
             "is_staff": False,
             "text": dto.initial_message,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         ticket = {
             "id": tid,
@@ -123,7 +130,7 @@ class SupportService:
             "status": "OPEN",
             "messages": [first_msg],
             "created_at": time.time(),
-            "updated_at": time.time()
+            "updated_at": time.time(),
         }
         self.repo.save(ticket)
         return SupportTicket(**ticket)
@@ -138,7 +145,7 @@ class SupportService:
             "sender_name": dto.sender_name,
             "is_staff": dto.is_staff,
             "text": dto.text,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         tkt["messages"].append(msg)
         tkt["updated_at"] = time.time()
@@ -163,6 +170,7 @@ class SupportService:
     def get_user_tickets(self, user_id: str) -> List[SupportTicket]:
         return [SupportTicket(**t) for t in self.repo.get_by_user(user_id)]
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Customer Support & Tickets Microservice", version="2.0.0")
 
@@ -174,31 +182,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> SupportTicketRepository:
     return SupportTicketRepository()
 
+
 def get_service(repo: SupportTicketRepository = Depends(get_repo)) -> SupportService:
     return SupportService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "support-service", "version": "2.0.0"}
 
+
 @app.post("/tickets", response_model=SupportTicket)
 def create_ticket(dto: TicketCreate, service: SupportService = Depends(get_service)):
     return service.create_ticket(dto)
+
 
 @app.get("/tickets/user/{user_id}", response_model=List[SupportTicket])
 def list_user_tickets(user_id: str, service: SupportService = Depends(get_service)):
     return service.get_user_tickets(user_id)
 
+
 @app.get("/tickets/{ticket_id}", response_model=SupportTicket)
 def get_ticket(ticket_id: str, service: SupportService = Depends(get_service)):
     return service.get_ticket(ticket_id)
 
+
 @app.post("/tickets/{ticket_id}/messages", response_model=SupportTicket)
 def reply_to_ticket(ticket_id: str, dto: MessageCreate, service: SupportService = Depends(get_service)):
     return service.add_message(ticket_id, dto)
+
 
 @app.patch("/tickets/{ticket_id}/resolve", response_model=SupportTicket)
 def resolve_ticket(ticket_id: str, service: SupportService = Depends(get_service)):

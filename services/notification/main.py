@@ -2,17 +2,20 @@ import json
 import os
 import time
 from typing import Dict, List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 DATA_FILE = os.getenv("DATA_FILE", "/data/notifications.json" if os.path.exists("/data") else "notifications_data.json")
+
 
 class NotificationCreate(BaseModel):
     user_id: str
     title: str
     message: str
     type: str = "info"  # "info", "order", "payment", "promo"
+
 
 class Notification(BaseModel):
     id: str
@@ -22,6 +25,7 @@ class Notification(BaseModel):
     type: str
     is_read: bool = False
     created_at: float = Field(default_factory=time.time)
+
 
 # --- Repository Pattern ---
 class NotificationRepository:
@@ -39,7 +43,7 @@ class NotificationRepository:
                     "message": "Welcome to the distributed microservices e-commerce lab platform.",
                     "type": "info",
                     "is_read": True,
-                    "created_at": time.time() - 90000
+                    "created_at": time.time() - 90000,
                 }
             ]
             self._save({n["id"]: n for n in initial})
@@ -68,6 +72,7 @@ class NotificationRepository:
         notifs[record["id"]] = record
         self._save(notifs)
 
+
 # --- Service Layer Pattern ---
 class NotificationService:
     def __init__(self, repo: NotificationRepository):
@@ -82,7 +87,7 @@ class NotificationService:
             "message": dto.message,
             "type": dto.type,
             "is_read": False,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
         self.repo.save(record)
         return Notification(**record)
@@ -98,6 +103,7 @@ class NotificationService:
     def get_user_notifications(self, user_id: str) -> List[Notification]:
         return [Notification(**n) for n in self.repo.get_by_user(user_id)]
 
+
 # --- FastAPI App & DI ---
 app = FastAPI(title="Notification & Events Microservice", version="2.0.0")
 
@@ -109,19 +115,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_repo() -> NotificationRepository:
     return NotificationRepository()
 
+
 def get_service(repo: NotificationRepository = Depends(get_repo)) -> NotificationService:
     return NotificationService(repo)
+
 
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "notification-service", "version": "2.0.0"}
 
+
 @app.post("/notifications/send", response_model=Notification)
 def send_notification(dto: NotificationCreate, service: NotificationService = Depends(get_service)):
     return service.send_notification(dto)
+
 
 @app.get("/recent", response_model=List[Notification])
 @app.get("/notifications/recent", response_model=List[Notification])
@@ -130,9 +141,11 @@ def get_recent_notifications(limit: int = 30, service: NotificationService = Dep
     all_notifs.sort(key=lambda x: x.get("created_at", 0), reverse=True)
     return [Notification(**n) for n in all_notifs[:limit]]
 
+
 @app.get("/notifications/user/{user_id}", response_model=List[Notification])
 def get_user_notifications(user_id: str, service: NotificationService = Depends(get_service)):
     return service.get_user_notifications(user_id)
+
 
 @app.patch("/notifications/{notification_id}/read", response_model=Notification)
 def mark_read(notification_id: str, service: NotificationService = Depends(get_service)):
